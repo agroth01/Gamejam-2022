@@ -38,7 +38,7 @@ public class GridNavMesh
     /// <summary>
     /// Generates the navmesh from objects referenced.
     /// </summary>
-    public void GenerateMesh()
+    public void Bake()
     {
         // First get the size of mesh to initialize node array.
         Vector2 navmeshSize = CalculateMeshSize();
@@ -84,6 +84,25 @@ public class GridNavMesh
 
         return m_nodes[x, y];
     }
+
+    /// <summary>
+    /// Returns the node at the given world position.
+    /// Will return null if out of bounds.
+    /// </summary>
+    /// <param name="worldPosition">Position in world space</param>
+    /// <returns></returns>
+    public Node GetNodeAt(Vector3 worldPosition)
+    {
+        // Convert X and Z to grid positions. Add 0.5f because of origin point.
+        int x = (worldPosition.x > 0) ? Mathf.FloorToInt(worldPosition.x + 0.5f) : Mathf.CeilToInt(worldPosition.x - 0.5f);
+        int y = worldPosition.z > 0 ? Mathf.FloorToInt(-worldPosition.z + 0.5f) : Mathf.CeilToInt(-worldPosition.z - 0.5f);
+
+        // Since Y will be inverted, we subtract the value from size to an accurate position.
+        y = (int)m_size.y - y - 1;
+
+        return GetNodeAt(x, y);
+    }
+
 
     /// <summary>
     /// Get the surrounding nodes in the caridnal directions from given node.
@@ -171,6 +190,9 @@ public class GridNavMesh
         // Now that we have the min and max values, we can calculate the size of the mesh.
         size.x = minX + maxX + 1;
         size.y = minY + maxY + 1;
+
+        // Finally, store the size as well
+        m_size = size;
 
         return size;
     }
