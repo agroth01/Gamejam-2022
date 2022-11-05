@@ -27,10 +27,11 @@ public class GridNavMesh
     private Transform m_groundHolder;
     private List<Transform> m_obstacleHolders;
 
-    public GridNavMesh(Transform groundHolder, List<Transform> obstacleHolders)
+    public GridNavMesh(Transform groundHolder, List<Transform> obstacleHolders, bool bakeMesh = false)
     {
         m_groundHolder = groundHolder;
         m_obstacleHolders = obstacleHolders;
+        if (bakeMesh) Bake();
     }
 
     #region Public Methods
@@ -40,6 +41,8 @@ public class GridNavMesh
     /// </summary>
     public void Bake()
     {
+        float startTime = Time.realtimeSinceStartup;
+
         // First get the size of mesh to initialize node array.
         Vector2 navmeshSize = CalculateMeshSize();
         m_size = navmeshSize;
@@ -66,6 +69,9 @@ public class GridNavMesh
             int y = (int)obstaclePosition.z + m_yOffset;
             m_nodes[x, y].IsObstructed = true;
         }
+
+        // Debug for performance tests
+        Debug.Log("Navmesh baked in " + (Time.realtimeSinceStartup - startTime) + " seconds.");
     }
 
     /// <summary>

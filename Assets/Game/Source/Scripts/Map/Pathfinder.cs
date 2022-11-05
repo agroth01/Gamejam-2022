@@ -123,7 +123,7 @@ public class Pathfinder
     /// <param name="a">First node</param>
     /// <param name="b">Second node</param>
     /// <returns></returns>
-    private int GetManhattenDistance(Node a, Node b)
+    public int GetManhattenDistance(Node a, Node b)
     {
         int x = Mathf.Abs(a.GridPosition.x - b.GridPosition.x);
         int y = Mathf.Abs(a.GridPosition.y - b.GridPosition.y);

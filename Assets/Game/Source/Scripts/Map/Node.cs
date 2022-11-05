@@ -31,4 +31,20 @@ public class Node
         WorldPosition = worldPosition;
         IsObstructed = isObstructed;
     }
+
+    /// <summary>
+    /// Converts a list of nodes into a list of world positions.
+    /// </summary>
+    /// <param name="nodes">Nodes to convert</param>
+    /// <returns></returns>
+    public static List<Vector2Int> ConvertToPositions(List<Node> nodes)
+    {
+        List<Vector2Int> convertedNodes = new List<Vector2Int>();
+        foreach (Node node in nodes)
+        {
+            convertedNodes.Add(node.GridPosition);
+        }
+        return convertedNodes;
+    }
+
 }

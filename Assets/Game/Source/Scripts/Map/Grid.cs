@@ -24,6 +24,9 @@ public class Grid : MonoBehaviour
     // Pathfinder object used for navigation on the grid.
     private Pathfinder m_pathfinder;
 
+    // To track where units are on the grid, we store them along with their positions in a dictionary.
+    private Dictionary<Unit, Vector2Int> m_unitRegistry;
+
     // Singleton to access grid from any class. This is important, since anything modifying
     // the map will have to rebake the navmesh.
     public static Grid Instance { get; private set; }
@@ -38,14 +41,14 @@ public class Grid : MonoBehaviour
         }
 
         // Initialize navigation
-        m_navmesh = new GridNavMesh(GroundHolder, ObstacleHolders);
+        m_navmesh = new GridNavMesh(GroundHolder, ObstacleHolders, true);
         m_pathfinder = new Pathfinder(m_navmesh);
+
+        // Registy
+        m_unitRegistry = new Dictionary<Unit, Vector2Int>();
     }
 
-    private void Update()
-    {
-        TestPathfindingClick();
-    }
+    #region Navigation
 
     /// <summary>
     /// Rebuilds the navmesh for pathfinding. This should be called every time there is a change on the map,
@@ -56,88 +59,184 @@ public class Grid : MonoBehaviour
         m_navmesh.Bake();
     }
 
-    #region Debugging
-
-    [Button("Test")]
-    private void TestPathfinding()
+    /// <summary>
+    /// Converts coordinates on the grid into a world position for
+    /// units to update position.
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    public Vector3 GetWorldPosition(int x, int y)
     {
-        float startTime = Time.realtimeSinceStartup;
-        m_navmesh.Bake();
-        Debug.Log("Baked grid nav mesh in: " + (Time.realtimeSinceStartup - startTime) + " seconds.");
-        startTime = Time.realtimeSinceStartup;
+        Node nodeAtPosition = m_navmesh.GetNodeAt(x, y);
+        return nodeAtPosition.WorldPosition;
+    }
 
-        List<Node> path = m_pathfinder.GetPath(m_navmesh.GetNodeAt(0, 2), m_navmesh.GetNodeAt(2, 8));
-        Debug.Log("Found path in: " + (Time.realtimeSinceStartup - startTime) + " seconds.");
-        if (path != null)
+    /// <summary>
+    /// Gives the position of something with the specified direction applied to it.
+    /// Easy way to get adjecent tiles for example.
+    /// </summary>
+    /// <param name="position"></param>
+    /// <param name="direction"></param>
+    /// <returns></returns>
+    public Vector2Int PositionWithDirection(Vector2Int position, Direction direction)
+    {
+        switch (direction)
         {
-            Debug.DrawLine(m_navmesh.GetNodeAt(0, 2).WorldPosition, path[0].WorldPosition, Color.red, 5);
-            for (int i = 0; i < path.Count - 1; i++)
-            {
-                Debug.DrawLine(path[i].WorldPosition, path[i + 1].WorldPosition, Color.red, 5);
-            }
-        }
-
-        else
-        {
-            Debug.Log("no path found");
+            case Direction.Up:
+                return new Vector2Int(position.x, position.y + 1);
+            case Direction.Down:
+                return new Vector2Int(position.x, position.y - 1);
+            case Direction.Left:
+                return new Vector2Int(position.x - 1, position.y);
+            case Direction.Right:
+                return new Vector2Int(position.x + 1, position.y);
+            default:
+                return position;
         }
     }
 
-    private void TestPathfindingClick()
+    /// <summary>
+    /// Gets a direction to a position from another position.
+    /// </summary>
+    /// <param name="from">Position to get direction from</param>
+    /// <param name="to">Position to get direction to</param>
+    /// <returns></returns>
+    public Direction GetDirectionTo(Vector2Int to, Vector2Int from)
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit))
-            {
-                Transform player = GameObject.Find("Player").transform;
-
-                Node node = m_navmesh.GetNodeAt(hit.point);
-                Node playerNode = m_navmesh.GetNodeAt(player.position);
-                List<Node> path = m_pathfinder.GetPath(playerNode, node);
-                if (node != null)
-                {
-                    if (path != null)
-                    {
-                        Debug.Log("aaa");
-                        List<Vector3> points = new List<Vector3>();
-                        foreach (Node n in path)
-                        {
-                            points.Add(n.WorldPosition);
-                        }
-
-                        StartCoroutine(TestMove(player, points, 4));
-                    }
-
-                    else
-                    {
-                        Debug.Log("no path");
-                    }
-
-                    
-                }
-
-                else
-                {
-                    Debug.Log("no node clicked");
-                }
-            }
-        }
-
+        // We can get away with using multiple if statements only because
+        // of the nature of the grid, they will only ever be in one of these.
+        if (from.x < to.x) return Direction.Right;
+        if (from.x > to.x) return Direction.Left;
+        if (from.y < to.y) return Direction.Up;
+        if (from.y > to.y) return Direction.Down;
+        return Direction.None;
     }
 
-    private IEnumerator TestMove(Transform mover, List<Vector3> points, float speed)
+    /// <summary>
+    /// Converts coordinates in the world into a grid position.
+    /// </summary>
+    /// <param name="worldPosition">Position in world space</param>
+    /// <returns></returns>
+    public Vector2Int GetGridPosition(Vector3 worldPosition)
     {
-        foreach (Vector3 point in points)
+        Node nodeAtPosition = m_navmesh.GetNodeAt(worldPosition);
+        if (nodeAtPosition == null)
+            return Vector2Int.zero;
+        
+        return nodeAtPosition.GridPosition;
+    }
+
+    /// <summary>
+    /// Returns a list of grid positions representing the path towards end
+    /// </summary>
+    /// <param name="start">Where to navigate from</param>
+    /// <param name="end">Target position</param>
+    /// <returns></returns>
+    public List<Vector2Int> GetPath(Vector2Int start, Vector2Int end)
+    {
+        // Convert positions to nodes
+        Node startNode = m_navmesh.GetNodeAt(start.x, start.y);
+        Node endNode = m_navmesh.GetNodeAt(end.x, end.y);
+
+        // Get the path
+        List<Node> pathNodes = m_pathfinder.GetPath(startNode, endNode);
+        if (pathNodes == null)
         {
-            while (Vector3.Distance(mover.position, point) > 0.1f)
-            {
-                mover.position = Vector3.MoveTowards(mover.position, point, speed * Time.deltaTime);
-                yield return null;
-            }
+            // In case there is no path found.
+            return null;
         }
+        
+        List<Vector2Int> path = Node.ConvertToPositions(pathNodes);
+
+        return path;
+    }
+
+    /// <summary>
+    /// Checks if there are anything on the tile like a wall or unit. Returns true if not.
+    /// </summary>
+    /// <param name="position">The position to check</param>
+    /// <returns></returns>
+    public bool IsTileFree(Vector2Int position)
+    {
+        // We need to check the node to see if it is obstructed.
+        Node node = m_navmesh.GetNodeAt(position.x, position.y);
+        return !node.IsObstructed;
+    }
+
+    /// <summary>
+    /// Gets the manhatten distance between two points on the grid
+    /// </summary>
+    /// <param name="start"></param>
+    /// <param name="end"></param>
+    /// <returns></returns>
+    public int GetManhattenDistance(Vector2Int start, Vector2Int end)
+    {
+        return m_pathfinder.GetManhattenDistance(GetNodeAt(start.x, start.y), GetNodeAt(end.x, end.y));
+    }
+
+    /// <summary>
+    /// Gets the node at the given point on grid.
+    /// </summary>
+    /// <param name="x">X value on grid.</param>
+    /// <param name="y">Y value on grid.</param>
+    /// <returns></returns>
+    public Node GetNodeAt(int x, int y)
+    {
+        return m_navmesh.GetNodeAt(x, y);
     }
 
     #endregion
+
+    #region Units
+
+    /// <summary>
+    /// Adds a unit to the registry. If they are not added, we will not be able to track them.
+    /// </summary>
+    /// <param name="unit">The unit to add.</param>
+    public void RegisterUnit(Unit unit)
+    {
+        Vector2Int position = GetGridPosition(unit.transform.position);
+        m_unitRegistry.Add(unit, position);
+    }
+
+    /// <summary>
+    /// Removes the unit from the registry.
+    /// </summary>
+    /// <param name="unit"></param>
+    public void UnregisterUnit(Unit unit)
+    {
+        m_unitRegistry.Remove(unit);
+    }
+
+    /// <summary>
+    /// Updates the position of the unit in the registry.
+    /// Has to be called when the unit moves.
+    /// </summary>
+    /// <param name="unit"></param>
+    public void UpdateUnit(Unit unit)
+    {
+        Vector2Int position = GetGridPosition(unit.transform.position);
+        m_unitRegistry[unit] = position;
+    }
+
+    /// <summary>
+    /// Looks for a unit on the given position on the grid.
+    /// Will return null if no unit is found.
+    /// </summary>
+    /// <param name="position">The grid position to check.</param>
+    /// <returns></returns>
+    public Unit GetUnitAt(Vector2Int position)
+    {
+        // Look for unit in registry and return it
+        foreach (KeyValuePair<Unit, Vector2Int> unit in m_unitRegistry)
+        {
+            if (unit.Value == position)
+                return unit.Key;
+        }
+
+        return null;
+    }
+
+    #endregion
+
 }
