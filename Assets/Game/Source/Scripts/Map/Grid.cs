@@ -217,6 +217,9 @@ public class Grid : MonoBehaviour
     {
         Vector2Int position = GetGridPosition(unit.transform.position);
         m_unitRegistry[unit] = position;
+
+        // Since a unit has moved, we need to rebake the navmesh.
+        m_navmesh.Bake();
     }
 
     /// <summary>

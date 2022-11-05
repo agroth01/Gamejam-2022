@@ -108,7 +108,7 @@ public abstract class Unit : MonoBehaviour, IDamagable
         float distance = Vector3.Distance(transform.position, worldPos);
 
         // While the distance is greater than 0.1f, move towards the target position.
-        while (distance > 0.1f)
+        while (distance != 0)
         {
             transform.position = Vector3.MoveTowards(transform.position, worldPos, speed * Time.deltaTime);
             distance = Vector3.Distance(transform.position, worldPos);
@@ -124,10 +124,9 @@ public abstract class Unit : MonoBehaviour, IDamagable
             yield return StartCoroutine(MoveToCoroutine(targetPosition, speed));
         }
 
-        // After completion, we have to rebake the grid.
-        // TODO: Make this only run once after all units have been moved.
-        //       Not really a problem because peformance is good, but still worth doing I think.
-        Grid.Instance.BakeNavMesh();
+        // After completion, we have to update the position in the grid registry.
+        // This will automatically rebake the navmesh.
+        Grid.Instance.UpdateUnit(this);
     }
 
 }
