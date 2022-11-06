@@ -108,12 +108,14 @@ public class Health
     /// <param name="newValue">The new value of current health.</param>
     private void ModifyHealth(int newValue)
     {
-        // Call event in case we want to do something when the health changes.
-        if (newValue != CurrentHealth) OnHealthChanged?.Invoke();
-
         // The current health needs to be clamped between 0 and maxhealth.
+        int oldHealth = CurrentHealth;
         CurrentHealth = newValue;
         CurrentHealth = Mathf.Clamp(CurrentHealth, 0, MaxHealth);
+
+        // OnHealthChanged should be called after the actual value is modified, so that elements
+        // relying on the health value can get the correct value.
+        if (newValue != oldHealth) OnHealthChanged?.Invoke();
 
         // Call event in case we want to do something when the health reaches 0.
         if (CurrentHealth == 0) OnHealthZero?.Invoke();

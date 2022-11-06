@@ -12,17 +12,22 @@ using UnityEngine;
 
 public class DamageAction : ICombatAction
 {
-    private IDamagable m_target;
+    private Vector2Int m_targetPosition;
     private int m_damageAmount;
 
     public void Execute()
     {
-        m_target.TakeDamage(m_damageAmount);
+        // Check if there is a target at the position.
+        IDamagable target = Grid.Instance.GetUnitAt(m_targetPosition);
+        if (target != null)
+        {
+            target.TakeDamage(m_damageAmount);
+        }
     }
 
-    public DamageAction(IDamagable target, int damageAmount)
+    public DamageAction(Vector2Int targetPosition, int damageAmount)
     {
-        m_target = target;
+        m_targetPosition = targetPosition;
         m_damageAmount = damageAmount;
     }
 }

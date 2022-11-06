@@ -22,7 +22,7 @@ public class DebugStats : MonoBehaviour
     {
         m_hp.text = "HP: " + m_player.Health.CurrentHealth.ToString();
     }
-
+    
     private void OnAPChange()
     {
         m_ap.text = "AP: " + m_player.ActionPoints.CurrentActionPoints.ToString() + " + " + m_player.ActionPoints.PooledActionPoints.ToString();

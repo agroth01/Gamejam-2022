@@ -34,7 +34,25 @@ public abstract class Unit : MonoBehaviour, IDamagable
         Grid.Instance.RegisterUnit(this);
     }
 
+    /// <summary>
+    /// Gets the current position of the unit on the grid
+    /// </summary>
+    public Vector2Int GridPosition
+    {
+        get { return Grid.Instance.GetGridPosition(transform.position); }
+    }
+
     public virtual void TakeDamage(int damage) { }
+
+    /// <summary>
+    /// Removes the unit from the scene. Should be called instead of Destroy().
+    /// </summary>
+    public void RemoveUnit()
+    {
+        Grid.Instance.UnregisterUnit(this);     
+        Grid.Instance.DelayedBake();
+        Destroy(gameObject);
+    }
 
     /// <summary>
     /// Sets the position of the entity directly on the grid.
@@ -47,7 +65,7 @@ public abstract class Unit : MonoBehaviour, IDamagable
         transform.position = worldPos;
 
         // After completion, we have to rebake the grid.
-        Grid.Instance.BakeNavMesh();
+        Grid.Instance.UpdateUnit(this);
     }
 
     /// <summary>
@@ -86,6 +104,14 @@ public abstract class Unit : MonoBehaviour, IDamagable
             // Then we move the unit along the path.
             // TODO: Make the speed value not hardcoded. Not sure where to put it though...
             MoveTo(path, 12 );
+
+            // Deal damage to the unit based on untraveled distance.
+            // TODO: Pass multiplier. Or other effects.
+            int damage = distance - possibleDistance;
+            if (damage > 0)
+            {
+                GetComponent<IDamagable>().TakeDamage(damage);
+            }
         }
     }
 
@@ -101,32 +127,28 @@ public abstract class Unit : MonoBehaviour, IDamagable
 
     private IEnumerator MoveToCoroutine(List<Vector2Int> targetPosition, float speed)
     {
-        // Get the world position of the first target position.
-        Vector3 worldPos = Grid.Instance.GetWorldPosition(targetPosition[0].x, targetPosition[0].y);
-
-        // Get the distance between the entity and the target position.
-        float distance = Vector3.Distance(transform.position, worldPos);
-
-        // While the distance is greater than 0.1f, move towards the target position.
-        while (distance != 0)
+        while (targetPosition.Count > 0)
         {
-            transform.position = Vector3.MoveTowards(transform.position, worldPos, speed * Time.deltaTime);
-            distance = Vector3.Distance(transform.position, worldPos);
-            yield return null;
-        }
+            // Get the world position of the first target position.
+            Vector3 worldPos = Grid.Instance.GetWorldPosition(targetPosition[0].x, targetPosition[0].y);
 
-        // Remove the first position from the list.
-        targetPosition.RemoveAt(0);
+            // Get the distance between the entity and the target position.
+            float distance = Vector3.Distance(transform.position, worldPos);
 
-        // If there are still positions in the list, call this coroutine again.
-        if (targetPosition.Count > 0)
-        {
-            yield return StartCoroutine(MoveToCoroutine(targetPosition, speed));
+            // While the distance is greater than 0.1f, move towards the target position.
+            while (distance != 0)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, worldPos, speed * Time.deltaTime);
+                distance = Vector3.Distance(transform.position, worldPos);
+                yield return null;
+            }
+
+            // Remove the first position from the list.
+            targetPosition.RemoveAt(0);
         }
 
         // After completion, we have to update the position in the grid registry.
         // This will automatically rebake the navmesh.
         Grid.Instance.UpdateUnit(this);
     }
-
 }

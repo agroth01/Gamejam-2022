@@ -11,21 +11,38 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyBase : Entity, IPushable
+public class Enemy : Entity, IPushable
 {
     [Header("Generic")]
     [SerializeField] private int m_maxHealth;
     [SerializeField] private int m_startingHealth;
+    [SerializeField] private int m_speed;
 
     // Collecion of possible attacks.
 
     public override void InitializeHealth()
     {
         m_health = new Health(m_maxHealth, m_startingHealth);
+        m_health.OnHealthZero += OnDeath;
+    }
+
+    /// <summary>
+    /// The method that will get called when deciding on what action should be taken by the enemy.
+    /// Should be overridden by each enemy type to decide what actions to use.
+    /// </summary>
+    public virtual void DetermineAction() { }
+
+    /// <summary>
+    /// Sends the action that the enemy will perform to the queue to be executed.
+    /// </summary>
+    /// <param name="action"></param>
+    public void SetAction(ICombatAction action)
+    {
+        BattleManager.Instance.AddActionToQueue(action, m_speed);
     }
 
     public override void OnDeath()
     {
-        Destroy(gameObject);
+        RemoveUnit();
     }
 }

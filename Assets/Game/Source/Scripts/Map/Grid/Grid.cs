@@ -60,6 +60,14 @@ public class Grid : MonoBehaviour
     }
 
     /// <summary>
+    /// Rebuilds the navmesh after a single frame.
+    /// </summary>
+    public void DelayedBake()
+    {
+        Invoke("BakeNavMesh", Time.deltaTime);
+    }
+
+    /// <summary>
     /// Converts coordinates on the grid into a world position for
     /// units to update position.
     /// </summary>
@@ -109,7 +117,7 @@ public class Grid : MonoBehaviour
         if (from.x > to.x) return Direction.Left;
         if (from.y < to.y) return Direction.Up;
         if (from.y > to.y) return Direction.Down;
-        return Direction.None;
+        return Direction.Up;
     }
 
     /// <summary>
@@ -238,6 +246,23 @@ public class Grid : MonoBehaviour
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Returns all the units of the given type currently in the grid.
+    /// </summary>
+    /// <typeparam name="T">Type of enemy</typeparam>
+    /// <returns></returns>
+    public List<Unit> GetUnitsOfType<T>() where T : Unit
+    {
+        List<Unit> units = new List<Unit>();
+        foreach (KeyValuePair<Unit, Vector2Int> unit in m_unitRegistry)
+        {
+            if (unit.Key is T)
+                units.Add(unit.Key);
+        }
+
+        return units;
     }
 
     #endregion

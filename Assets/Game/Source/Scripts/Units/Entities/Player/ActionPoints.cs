@@ -31,7 +31,7 @@ public class ActionPoints
     public ActionPoints(int maxActionPoints, int startingActionPoints, int actionPointPoolSize)
     {
         MaxActionPoints = maxActionPoints;
-        CurrentActionPoints = startingActionPoints;
+        CurrentActionPoints = 0;
         ActionPointPoolSize = actionPointPoolSize;
         PooledActionPoints = 0;
     }

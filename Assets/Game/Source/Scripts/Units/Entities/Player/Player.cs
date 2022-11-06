@@ -11,7 +11,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Player : Entity
+public class Player : Entity, IDamagable
 {
     [Header("Health")]
     [SerializeField] private int m_maxHealth = 3;
@@ -57,6 +57,7 @@ public class Player : Entity
 
     public override void TakeDamage(int damage)
     {
+        Debug.Log("Player took damage: " + damage);
         m_health.Damage(damage);
     }
 
@@ -192,6 +193,7 @@ public class Player : Entity
         // By default, have no target. We will use null to check
         // if valid target is chosen when the player clicks.
         IDamagable target = null;
+        Vector2Int targetPosition = Vector2Int.zero;
 
         Debug.Log("Starting melee");
 
@@ -214,6 +216,7 @@ public class Player : Entity
                     {
                         // A valid target.
                         target = potentialTarget;
+                        targetPosition = targetPos;
                     }
                 }
             }
@@ -228,7 +231,7 @@ public class Player : Entity
         // If we have a valid target, we will attack it.
         if (target != null)
         {
-            ICombatAction melee = new DamageAction(target, m_meleeDamage);
+            ICombatAction melee = new DamageAction(targetPosition, m_meleeDamage);
             melee.Execute();
 
             // Subtract the cost of the move from the action points.
