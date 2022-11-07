@@ -17,6 +17,19 @@ public class Health
     #region Public Properties
 
     /// <summary>
+    /// Shield is bonus health that will get added and removed.
+    /// </summary>
+    public int Shield { get; private set; }
+
+    /// <summary>
+    /// The combination of the health and shield.
+    /// </summary>
+    public int EffectiveHealth
+    {
+        get { return CurrentHealth + Shield; }
+    }
+
+    /// <summary>
     /// The current amount of health left.
     /// </summary>
     public int CurrentHealth { get; private set; }
@@ -60,7 +73,7 @@ public class Health
 
     #endregion
 
-    #region Public Methods
+    #region Health
 
     /// <summary>
     /// Removes health.
@@ -68,7 +81,7 @@ public class Health
     /// <param name="amount">The amount to remove.</param>
     public void Damage(int amount)
     {
-        ModifyHealth(CurrentHealth - amount);
+        ModifyHealth(-amount);
         OnDamaged?.Invoke();
     }
 
@@ -78,7 +91,7 @@ public class Health
     /// <param name="amount">The amount to add</param>
     public void Heal(int amount)
     {
-        ModifyHealth(CurrentHealth + amount);
+        ModifyHealth(amount);
         OnHealed?.Invoke();
     }
 
@@ -87,7 +100,7 @@ public class Health
     /// </summary>
     public void Kill()
     {
-        ModifyHealth(0);
+        ModifyHealth(-EffectiveHealth);
     }
 
     /// <summary>
@@ -100,22 +113,88 @@ public class Health
 
     #endregion
 
+    #region Shield
+
+    /// <summary>
+    /// Sets the shield value directly
+    /// </summary>
+    /// <param name="amount"></param>
+    public void SetShield(int amount)
+    {
+        Shield = amount;
+        OnHealthChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Adds shield to the health.
+    /// </summary>
+    /// <param name="amount">Shielding amount</param>
+    public void AddShield(int amount)
+    {
+        Shield += amount;
+        OnHealthChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Removes shield from the health.
+    /// </summary>
+    /// <param name="amount">Amount to remove</param>
+    public void RemoveShield(int amount)
+    {
+        Shield -= amount;
+        OnHealthChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Removes shield completely.
+    /// </summary>
+    public void ClearShield()
+    {
+        Shield = 0;
+        OnHealthChanged?.Invoke();
+    }
+
+    #endregion
+
     #region Private Methods
 
     /// <summary>
-    /// Sets the value of the current health directly.
+    /// Updates the health value and calls events.
     /// </summary>
-    /// <param name="newValue">The new value of current health.</param>
-    private void ModifyHealth(int newValue)
+    /// <param name="change">Amount to change by</param>
+    private void ModifyHealth(int change)
     {
-        // The current health needs to be clamped between 0 and maxhealth.
-        int oldHealth = CurrentHealth;
-        CurrentHealth = newValue;
-        CurrentHealth = Mathf.Clamp(CurrentHealth, 0, MaxHealth);
+        int originalHealth = EffectiveHealth;
 
-        // OnHealthChanged should be called after the actual value is modified, so that elements
-        // relying on the health value can get the correct value.
-        if (newValue != oldHealth) OnHealthChanged?.Invoke();
+        // If the change is negative, shields will be prioritized before health.
+        // If the change is positive, we only want to increase health and not shield.
+        if (change < 0)
+        {
+            // If the change is negative, we want to remove from the shield first.
+            // If the shield is not enough to cover the change, we want to remove the rest from health.
+            if (Shield > 0)
+            {
+                Shield = Mathf.Max(0, Shield + change);
+                change = Mathf.Min(0, change + Shield);
+            }
+
+            // If the change is still negative, we want to remove from health.
+            if (change < 0)
+            {
+                CurrentHealth = Mathf.Max(0, CurrentHealth + change);
+            }
+        }
+        else
+        {
+            // If the change is positive, we only want to add to health.
+            CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + change);
+        }
+
+        // Now we can compare if the value has changed and call event
+        if (EffectiveHealth != originalHealth)
+        {
+            OnHealthChanged?.Invoke();
+        }
 
         // Call event in case we want to do something when the health reaches 0.
         if (CurrentHealth == 0) OnHealthZero?.Invoke();

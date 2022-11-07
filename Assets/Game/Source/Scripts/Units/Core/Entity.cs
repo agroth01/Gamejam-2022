@@ -27,11 +27,11 @@ public abstract class Entity : Unit, IPushable
         InitializeHealth();
     }
 
+    public override void SetShield(int amount)
+    {
+        m_health.SetShield(amount);
+    }
+
     public abstract void InitializeHealth();
     public abstract void OnDeath();
-
-    public void Push(Vector2Int pushForce)
-    {
-        
-    }
 }

@@ -48,6 +48,27 @@ public class Grid : MonoBehaviour
         m_unitRegistry = new Dictionary<Unit, Vector2Int>();
     }
 
+    #region Tiles
+
+    /// <summary>
+    /// Places a highlight object at the given position on the grid and change the 
+    /// material of the object placed.
+    /// </summary>
+    /// <param name="position">Where to place the highlight</param>
+    /// <param name="highlightColor">Color of the highlight</param>
+    public GameObject HighlightTile(Vector2Int position, Color highlightColor)
+    {
+        // The prefab is stored in the resource folder.
+        GameObject highlightPrefab = Resources.Load<GameObject>("Map/Highlight");
+        GameObject highlight = Instantiate(highlightPrefab);
+        highlight.GetComponentInChildren<Renderer>().material.color = highlightColor;
+        highlight.transform.position = GetWorldPosition(position.x, position.y);
+
+        return highlight;
+    }
+
+    #endregion
+
     #region Navigation
 
     /// <summary>

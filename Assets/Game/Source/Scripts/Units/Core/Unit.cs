@@ -17,9 +17,12 @@ using UnityEngine;
 
 public abstract class Unit : MonoBehaviour, IDamagable
 {
+    private List<StatusEffect> m_statusEffects;
+
     public virtual void Awake()
     {
-        
+        // Initialize status effect list
+        m_statusEffects = new List<StatusEffect>();
     }
 
     public virtual void OnEnable()
@@ -43,6 +46,12 @@ public abstract class Unit : MonoBehaviour, IDamagable
     }
 
     public virtual void TakeDamage(int damage) { }
+
+    /// <summary>
+    /// Empty method meant for overriding by inheriting classes for adding shields.
+    /// </summary>
+    /// <param name="amount"></param>
+    public virtual void SetShield(int amount) { }
 
     /// <summary>
     /// Removes the unit from the scene. Should be called instead of Destroy().
@@ -116,6 +125,12 @@ public abstract class Unit : MonoBehaviour, IDamagable
     }
 
     /// <summary>
+    /// Called when the unit has been pushed. Used for when an enemy has an attack planned,
+    /// but needs to move it when pushed.
+    /// </summary>
+    public virtual void OnFinishedMoving() { }
+
+    /// <summary>
     /// Moves the entity to the desired position on the grid.
     /// </summary>
     /// <param name="targetPositions">Positions to move to.</param>
@@ -150,5 +165,74 @@ public abstract class Unit : MonoBehaviour, IDamagable
         // After completion, we have to update the position in the grid registry.
         // This will automatically rebake the navmesh.
         Grid.Instance.UpdateUnit(this);
+        OnFinishedMoving();
     }
+
+    #region Status effects
+
+    public void AddStatusEffect(StatusEffect effect)
+    {
+        Debug.Log(("Added status effect " + effect.ToString() + " to " + name));
+        m_statusEffects.Add(effect);
+        effect.OnEffectAdd(this);
+    }
+
+    public void RemoveStatusEffect(StatusEffect effect)
+    {
+        Debug.Log(("Removed status effect " + effect.ToString() + " from " + name));
+        m_statusEffects.Remove(effect);
+        effect.OnEffectRemoved(this);
+    }
+
+    /// <summary>
+    /// Calls the OnStartTurn method in all status effects on this unit.
+    /// </summary>
+    public void TurnStartEffects()
+    {
+        // Because the list of effects might be modified by removing the effect while in the loop,
+        // we create a copy of the list and iterate through that.
+        List<StatusEffect> effects = new List<StatusEffect>(m_statusEffects);
+
+        foreach (StatusEffect effect in effects)
+        {
+            effect.OnStartTurn(this);
+        }
+    }
+
+    /// <summary>
+    /// Calls the OnEndTurn method in all status effects on this unit.
+    /// </summary>
+    public void TurnEndEffects()
+    {
+        // Because the list of effects might be modified by removing the effect while in the loop,
+        // we create a copy of the list and iterate through that.
+        List<StatusEffect> effects = new List<StatusEffect>(m_statusEffects);
+
+        foreach (StatusEffect effect in effects)
+        {
+            effect.OnEndTurn(this);
+        }
+    }
+
+    #endregion
+
+    #region Turns
+
+    /// <summary>
+    /// Called when the turn of the unit starts.
+    /// </summary>
+    public virtual void OnTurnStart()
+    {
+        TurnStartEffects();
+    }
+
+    /// <summary>
+    /// Called when the turn of the unit ends.
+    /// </summary>
+    public virtual void OnTurnEnd()
+    {
+        TurnEndEffects();
+    }
+
+    #endregion
 }

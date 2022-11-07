@@ -2,7 +2,7 @@
 // -----------------------
 // Creation date: 05/11/2022
 // Author: Alex
-// Description: This action will deal damage to something that has IDamagable interface.
+// Description: This action will deal damage to anything at a single tile.
 // -----------------------
 // ------------------- */
 
@@ -10,7 +10,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DamageAction : ICombatAction
+public class SingleDamageAction : ICombatAction
 {
     private Vector2Int m_targetPosition;
     private int m_damageAmount;
@@ -25,7 +25,7 @@ public class DamageAction : ICombatAction
         }
     }
 
-    public DamageAction(Vector2Int targetPosition, int damageAmount)
+    public SingleDamageAction(Vector2Int targetPosition, int damageAmount)
     {
         m_targetPosition = targetPosition;
         m_damageAmount = damageAmount;

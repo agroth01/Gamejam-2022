@@ -26,6 +26,11 @@ public class Enemy : Entity, IPushable
         m_health.OnHealthZero += OnDeath;
     }
 
+    public override void TakeDamage(int damage)
+    {
+        m_health.Damage(damage);
+    }
+
     /// <summary>
     /// The method that will get called when deciding on what action should be taken by the enemy.
     /// Should be overridden by each enemy type to decide what actions to use.
@@ -39,6 +44,15 @@ public class Enemy : Entity, IPushable
     public void SetAction(ICombatAction action)
     {
         BattleManager.Instance.AddActionToQueue(action, m_speed);
+    }
+
+    /// <summary>
+    /// Removes the action from the queue.
+    /// </summary>
+    /// <param name="action"></param>
+    public void RemoveAction(ICombatAction action)
+    {
+        BattleManager.Instance.RemoveActionFromQueue(action);
     }
 
     public override void OnDeath()

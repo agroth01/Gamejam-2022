@@ -27,6 +27,7 @@ public class BattleManager : MonoBehaviour
 
     // Track the player for easy access to methods and variables.
     private Player m_player;
+    private List<Enemy> m_enemies;
 
     // Events
     public Action OnPlayerTurn;
@@ -46,13 +47,13 @@ public class BattleManager : MonoBehaviour
 
         // Find the player. It is invoked with some delay, as it is not guaranteed to be
         // registered in grid in Awake().
-        this.Invoke(() => m_player = (Player)Grid.Instance.GetUnitsOfType<Player>()[0], 0.1f);
+        this.Invoke(() => m_player = (Player)Grid.Instance.GetUnitsOfType<Player>()[0], 0.25f);
     }
 
     private void Start()
     {
         // For debugging, start player turn from here.
-        this.Invoke(StartPlayerTurn, 0.1f);
+        this.Invoke(StartPlayerTurn, 0.5f);
     }
 
     #region Queue
@@ -68,6 +69,17 @@ public class BattleManager : MonoBehaviour
         m_turnQueueBuffer.Add(item);
     }
 
+    /// <summary>
+    /// Removes an action from the queue.
+    /// </summary>
+    /// <param name="action">The action to remove.</param>
+    public void RemoveActionFromQueue(ICombatAction action)
+    {
+        // Find the item with the action and remove it.
+        QueueBufferItem item = m_turnQueueBuffer.Find(x => x.Action == action);
+        m_turnQueueBuffer.Remove(item);
+    }
+
     #endregion
 
     #region Turns
@@ -81,6 +93,9 @@ public class BattleManager : MonoBehaviour
         if (m_state == BattleState.Enemy) return;
         m_state = BattleState.Enemy;
 
+        // Apply effects for end of player turn
+        m_player.OnTurnEnd();
+
         // All actions in the buffer will be added into the queue based
         // on their priority.
         m_turnQueueBuffer.Sort((a, b) => a.Priority.CompareTo(b.Priority));
@@ -88,6 +103,7 @@ public class BattleManager : MonoBehaviour
         {
             m_turnQueue.AddAction(item.Action);
         }
+        m_turnQueueBuffer.Clear();
 
         OnEnemyTurn?.Invoke();
         StartCoroutine(PerformEnemyActions());
@@ -102,6 +118,8 @@ public class BattleManager : MonoBehaviour
         // so that player can plan around it.
         DetermineEnemyMoves();
 
+
+        m_player.OnTurnStart();
         m_player.RestoreAP();
         m_state = BattleState.Player;
         OnPlayerTurn?.Invoke();
@@ -122,12 +140,23 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private IEnumerator PerformEnemyActions()
     {
+
+        foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
+        {
+            enemy.OnTurnStart();
+        }
+
         // Go through all the actions in the queue and perform them.
         while (m_turnQueue.Count > 0)
         {
             ICombatAction action = m_turnQueue.GetNextAction();
             action.Execute();
             yield return 0;
+        }
+
+        foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
+        {
+            enemy.OnTurnEnd();
         }
 
         // When done, it goes back to being the player's turn.

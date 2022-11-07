@@ -7,6 +7,7 @@
 // -----------------------
 // ------------------- */
 
+using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -66,6 +67,16 @@ public class Player : Entity, IDamagable
         m_actionPoints.RestoreActionPoints();
     }
 
+    #region Debugging
+
+    [Button("Add shield")]
+    public void AddShield()
+    {
+        AddStatusEffect(new ShieldStatusEffect(5));
+    }
+
+    #endregion
+
     #region Actions
 
     /// <summary>
@@ -100,44 +111,33 @@ public class Player : Entity, IDamagable
             // First get the grid position that mouse is currently looking at.
             Vector2Int mousePosition = GetCursorGridPosition();
 
-            // Before running pathfinding, we get manhatten distance to make sure we have enough
-            // AP to move so far. Less computationally expensive than running pathfinding when not needed.
-            distance = Grid.Instance.GetManhattenDistance(playerPosition, mousePosition);
-            if ((distance * m_moveCostPerTile) <= m_actionPoints.TotalActionPoints)
+            // Perform pathfinding towards the mouse position.
+            currentPath = Grid.Instance.GetPath(playerPosition, mousePosition);
+
+            // A path was found. Make sure that it is within the player's movement range.
+            // Each item in path list equals one tile, so using the size is the same as distance
+            if (currentPath != null && (currentPath.Count * m_moveCostPerTile) <= m_actionPoints.TotalActionPoints)
             {
-                // Perform pathfinding towards the mouse position.
-                currentPath = Grid.Instance.GetPath(playerPosition, mousePosition);
-
-                // A path was found
-                if (currentPath != null)
+                lineRenderer.positionCount = currentPath.Count + 1;
+                lineRenderer.SetPosition(0, Grid.Instance.GetWorldPosition(playerPosition.x, playerPosition.y));
+                // Go through each point and set the line renderer between them
+                for (int i = 0; i < currentPath.Count; i++)
                 {
-                    lineRenderer.positionCount = currentPath.Count + 1;
-                    lineRenderer.SetPosition(0, Grid.Instance.GetWorldPosition(playerPosition.x, playerPosition.y));
-                    // Go through each point and set the line renderer between them
-                    for (int i = 0; i < currentPath.Count; i++)
-                    {
-                        Vector3 point = Grid.Instance.GetWorldPosition(currentPath[i].x, currentPath[i].y);
-                        lineRenderer.SetPosition(i + 1, point);
-                    }
-
-                    // Since this is valid, we make the line renderer green
-                    lineRenderer.startColor = Color.green;
-                    lineRenderer.endColor = Color.green;
-                    isValid = true;
+                    Vector3 point = Grid.Instance.GetWorldPosition(currentPath[i].x, currentPath[i].y);
+                    lineRenderer.SetPosition(i + 1, point);
                 }
 
-                // No valid path found.
-                else
-                {
-                    lineRenderer.startColor = Color.red;
-                    lineRenderer.endColor = Color.red;
-                    isValid = false;
-                }             
+                // Since this is valid, we make the line renderer green
+                lineRenderer.startColor = Color.green;
+                lineRenderer.endColor = Color.green;
+                isValid = true;
+
+                distance = currentPath.Count;
             }
 
+            // No valid path found.
             else
             {
-                // In cases where it is out of range, make line renderer red
                 lineRenderer.startColor = Color.red;
                 lineRenderer.endColor = Color.red;
                 isValid = false;
@@ -231,7 +231,7 @@ public class Player : Entity, IDamagable
         // If we have a valid target, we will attack it.
         if (target != null)
         {
-            ICombatAction melee = new DamageAction(targetPosition, m_meleeDamage);
+            ICombatAction melee = new SingleDamageAction(targetPosition, m_meleeDamage);
             melee.Execute();
 
             // Subtract the cost of the move from the action points.

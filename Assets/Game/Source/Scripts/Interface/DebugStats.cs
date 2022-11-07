@@ -20,7 +20,7 @@ public class DebugStats : MonoBehaviour
 
     private void OnHealthChange()
     {
-        m_hp.text = "HP: " + m_player.Health.CurrentHealth.ToString();
+        m_hp.text = "HP: " + m_player.Health.CurrentHealth.ToString() + " + " + m_player.Health.Shield.ToString();
     }
     
     private void OnAPChange()
