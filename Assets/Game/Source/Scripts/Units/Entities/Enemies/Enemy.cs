@@ -16,7 +16,6 @@ public abstract class Enemy : Entity, IPushable
     [Header("Generic")]
     [SerializeField] private string m_displayName;
     [SerializeField] private int m_actionPriority;
-    [SerializeField] private int m_maxTiles;   
 
     [Header("Highlights")]
     [SerializeField] private Color m_damageHighlightColor;

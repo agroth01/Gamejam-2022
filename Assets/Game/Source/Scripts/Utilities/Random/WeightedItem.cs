@@ -10,10 +10,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class WeightedItem<T>
 {
-    public T Item { get; private set; }
-    public int Weight { get; private set; }
+    public T Item;
+    public int Weight;
 
     public WeightedItem(T item, int weight)
     {

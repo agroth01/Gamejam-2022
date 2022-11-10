@@ -35,6 +35,10 @@ public class MeleeEnemy : Enemy
             Direction directionToPlayer = Grid.Instance.GetDirectionTo(playerPosition, GridPosition);
             Vector2Int attackPosition = Grid.Instance.PositionWithDirection(GridPosition, directionToPlayer);
 
+            // Cache the attack direction in case the enemy gets pushed, so that we can recalculate new attack position
+            // later.
+            m_attackDirection = directionToPlayer;
+
             // Store the action as a private variable, so that we can remove it later if we need to.
             m_action = new SingleDamageAction(attackPosition, m_damage);
             SetAction(m_action);

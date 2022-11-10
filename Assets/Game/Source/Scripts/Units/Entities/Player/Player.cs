@@ -204,8 +204,6 @@ public class Player : Entity, IDamagable
         IDamagable target = null;
         Vector2Int targetPosition = Vector2Int.zero;
 
-        Debug.Log("Starting melee");
-
         while(!Input.GetKeyDown(KeyCode.Escape))
         {
             // Raycast from cursor to check if whatever cursor is over has IDamagable interface
@@ -241,7 +239,7 @@ public class Player : Entity, IDamagable
         if (target != null)
         {
             ICombatAction melee = new SingleDamageAction(targetPosition, m_meleeDamage);
-            melee.Execute();
+            StartCoroutine(melee.Execute());
 
             // Subtract the cost of the move from the action points.
             m_actionPoints.SpendActionPoints(m_meleeCost);
@@ -377,7 +375,7 @@ public class Player : Entity, IDamagable
         {
             // Create an instant move action and execute it here.
             ICombatAction blink = new InstantMoveAction(this, chosenPosition);
-            blink.Execute();
+            StartCoroutine(blink.Execute());
 
             // Subtract the cost of the move from the action points.
             m_actionPoints.SpendActionPoints(m_blinkCost);
