@@ -187,7 +187,7 @@ public abstract class Unit : MonoBehaviour, IDamagable
     /// <summary>
     /// Calls the OnStartTurn method in all status effects on this unit.
     /// </summary>
-    public void TurnStartEffects()
+    private void TurnStartEffects()
     {
         // Because the list of effects might be modified by removing the effect while in the loop,
         // we create a copy of the list and iterate through that.
@@ -202,7 +202,7 @@ public abstract class Unit : MonoBehaviour, IDamagable
     /// <summary>
     /// Calls the OnEndTurn method in all status effects on this unit.
     /// </summary>
-    public void TurnEndEffects()
+    private void TurnEndEffects()
     {
         // Because the list of effects might be modified by removing the effect while in the loop,
         // we create a copy of the list and iterate through that.
