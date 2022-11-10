@@ -34,6 +34,22 @@ public class GridNavMesh
         if (bakeMesh) Bake();
     }
 
+    /// <summary>
+    /// The width of the navmesh
+    /// </summary>
+    public int Width
+    {
+        get { return (int)m_size.x; }
+    }
+
+    /// <summary>
+    /// The height of the navmesh.
+    /// </summary>
+    public int Height
+    {
+        get { return (int)m_size.y; }
+    }
+
     #region Public Methods
 
     /// <summary>

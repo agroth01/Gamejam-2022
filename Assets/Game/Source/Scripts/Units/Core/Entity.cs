@@ -48,5 +48,4 @@ public abstract class Entity : Unit, IPushable
     }
 
     public abstract void InitializeHealth();
-    public abstract void OnDeath();
 }

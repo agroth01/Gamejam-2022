@@ -29,7 +29,7 @@ public class MeleeEnemy : Enemy
         // Here, enemy will deal damage to the tile the player is on if the enemy is adjecent to player.
         // If enemy is not adjecent, enemy will perform alternate action.
         Vector2Int playerPosition = Grid.Instance.GetGridPosition(GetPlayer().transform.position);
-        if (Grid.Instance.IsAdjecent(playerPosition, GridPosition))
+        if (Grid.Instance.IsAdjacent(playerPosition, GridPosition))
         {
             // The player is adjecent. We get the direction to the player and create an attack action in that direction.
             Direction directionToPlayer = Grid.Instance.GetDirectionTo(playerPosition, GridPosition);
@@ -59,7 +59,7 @@ public class MeleeEnemy : Enemy
         // If enemy is not adjecent to the player, enemy will move to become adjecent to player.
         // Otherwise, enemy skips moving.
         Vector2Int playerPosition = Grid.Instance.GetGridPosition(GetPlayer().transform.position);
-        if (Grid.Instance.IsAdjecent(playerPosition, GridPosition)) return;
+        if (Grid.Instance.IsAdjacent(playerPosition, GridPosition)) return;
 
         // We know now that we are not adjecent and need to move towards player. We find the tile adjecent
         // to the player that is closest, then calculate the path towards that tile and move as much as we can.

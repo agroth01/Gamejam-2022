@@ -385,7 +385,7 @@ public class Player : Entity, IDamagable
             Direction chosenDirection = blinkPositions.FirstOrDefault(x => x.Value == chosenPosition).Key;
             Vector2Int damagePosition = Grid.Instance.PositionWithDirection(chosenPosition, chosenDirection);
             ICombatAction damage = new SingleDamageAction(damagePosition, m_blinkDamage);
-            damage.Execute();
+            StartCoroutine(damage.Execute());
         }
     }
 
@@ -417,11 +417,5 @@ public class Player : Entity, IDamagable
     private void InitializeActionPoints()
     {
         m_actionPoints = new ActionPoints(m_maxActionPoints, m_startingActionPoints, m_actionPointPoolSize);
-    }
-
-    public override void OnDeath()
-    {
-        Debug.Log("Player has died!");
-        Destroy(gameObject);
     }
 }

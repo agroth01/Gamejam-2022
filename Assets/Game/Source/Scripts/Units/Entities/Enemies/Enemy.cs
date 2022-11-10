@@ -86,8 +86,12 @@ public abstract class Enemy : Entity, IPushable
         BattleManager.Instance.RemoveActionFromQueue(action);
         ClearHighlights();
     }
-
-    public override void OnDeath()
+    
+    /// <summary>
+    /// Method that will be called when the enemy dies. When overriding, it is important
+    /// that the base is called AFTER custom logic, unless you want to override removal process.
+    /// </summary>
+    public virtual void OnDeath()
     {
         // Note that we do not need to clear the highlights here when the enemy dies,
         // because it is handled when removing action.

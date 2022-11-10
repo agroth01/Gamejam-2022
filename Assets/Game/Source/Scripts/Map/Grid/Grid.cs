@@ -10,6 +10,7 @@
 using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using UnityEngine;
 
 public class Grid : MonoBehaviour
@@ -216,7 +217,7 @@ public class Grid : MonoBehaviour
     /// <param name="a">First position to check.</param>
     /// <param name="b">Second position to check.</param>
     /// <returns></returns>
-    public bool IsAdjecent(Vector2Int a, Vector2Int b)
+    public bool IsAdjacent(Vector2Int a, Vector2Int b)
     {
         // Loop through all directions
         foreach (Direction dir in typeof(Direction).GetEnumValues())
@@ -227,6 +228,85 @@ public class Grid : MonoBehaviour
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Gets all tiles in 8 directions around the position.
+    /// </summary>
+    /// <param name="position">Position to check tiles around.</param>
+    /// <param name="radius">Radius to check</param>
+    /// <returns></returns>
+    public List<Vector2Int> GetSurroundingTiles(Vector2Int position, int radius = 1)
+    {
+        List<Vector2Int> tiles = new List<Vector2Int>();
+
+        // We check all tiles around the position
+        int range = 3 + (radius - 1);
+        for (int x = -range; x < range + 1; x++)
+        {
+            for (int y = -range; y < range + 1; y++)
+            {
+                // Skip the center tile
+                if (x == 0 && y == 0)
+                    continue;
+
+                Vector2Int tile = new Vector2Int(position.x + x, position.y + y);
+                if (IsInBounds(tile))
+                    tiles.Add(tile);
+            }
+        }
+
+        return tiles;
+    }
+
+    /// <summary>
+    /// Checks if there are any obstacles between two positions in a straight line.
+    /// </summary>
+    /// <param name="a">From position.</param>
+    /// <param name="b">To position.</param>
+    /// <returns></returns>
+    public bool LineOfSight(Vector2Int a, Vector2Int b)
+    {
+        // Make sure that they are in a straight line
+        if (!InStraightLine(a, b)) return false;
+
+        // Get the direction from a to b
+        Direction dir = GetDirectionTo(b, a);
+
+        // Get the distance between the two positions
+        int distance = GetDistance(a, b);
+
+        // Loop through all positions between a and b
+        Vector2Int checkPosition = a;
+        for (int i = 1; i < distance; i++)
+        {
+            // Get the position with the direction
+            Vector2Int pos = PositionWithDirection(checkPosition, dir);
+
+            // Check if the tile is free
+            if (!IsTileFree(pos))
+                return false;
+
+            // Set the position to check to the new position
+            checkPosition = pos;
+        }
+
+        // Finally, return true if there are no obstacles
+        return true;
+    }
+
+    /// <summary>
+    /// Determines if two points is in a straight line
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public bool InStraightLine(Vector2Int a, Vector2Int b)
+    {
+        // If the x or y is the same, they are in a straight line
+        if (a.x == b.x || a.y == b.y)
+            return true;
+        else return false;
     }
 
     /// <summary>
@@ -249,6 +329,16 @@ public class Grid : MonoBehaviour
     public Node GetNodeAt(int x, int y)
     {
         return m_navmesh.GetNodeAt(x, y);
+    }
+
+    /// <summary>
+    /// Checks if a position is within the bounds of the navmesh
+    /// </summary>
+    /// <param name="position">The position to check</param>
+    /// <returns></returns>
+    private bool IsInBounds(Vector2Int position)
+    {
+        return position.x >= 0 && position.x < m_navmesh.Width && position.y >= 0 && position.y < m_navmesh.Height;
     }
 
     #endregion
