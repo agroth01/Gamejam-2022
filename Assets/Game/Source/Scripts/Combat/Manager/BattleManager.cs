@@ -109,10 +109,6 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     public void StartPlayerTurn()
     {
-        // Enemies should choose their actions as soon as player turn starts,
-        // so that player can plan around it.
-        DetermineEnemyMoves();
-
         m_player.OnTurnStart();
         m_player.RestoreAP();
         m_state = BattleState.Player;
@@ -151,14 +147,18 @@ public class BattleManager : MonoBehaviour
             yield return action.Execute();
         }
 
+        // Since we now have determined if the enemy should move, we can now
+        // loop through turn queue again, as units might want to move.
+        yield return HandleEnemyMovement();
+
+        // End of turn effects gets processed here
         foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
         {
             enemy.OnTurnEnd();
         }
 
-        // Since we now have determined if the enemy should move, we can now
-        // loop through turn queue again, as units might want to move.
-        yield return HandleEnemyMovement();
+        // Enemies should then choose their new moves for next round after having moved.
+        DetermineEnemyMoves();
 
         // When done, it goes back to being the player's turn.
         StartPlayerTurn();
