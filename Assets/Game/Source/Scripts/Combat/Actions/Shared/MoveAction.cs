@@ -13,7 +13,7 @@ using UnityEngine;
 public class MoveAction : ICombatAction
 {
     // Tracking of all the points that we want to visit.
-    private List<Vector2Int> m_destinations;
+    public List<Vector2Int> Destinations { get; private set; }
 
     // The speed at which movement towards destinations go at.
     private float m_speed;
@@ -21,9 +21,9 @@ public class MoveAction : ICombatAction
     // The entity that wants to move
     private Entity m_entity;
 
-    public void Execute()
+    public IEnumerator Execute()
     {
-        m_entity.MoveTo(m_destinations, m_speed);
+        yield return m_entity.MoveTo(Destinations, m_speed);
     }
 
     /// <summary>
@@ -35,7 +35,7 @@ public class MoveAction : ICombatAction
     public MoveAction(Entity entity, List<Vector2Int> destinations, float speed)
     {
         m_entity = entity;
-        m_destinations = destinations;
+        Destinations = destinations;
         m_speed = speed;
     }
 
@@ -48,7 +48,7 @@ public class MoveAction : ICombatAction
     public MoveAction(Entity entity, Vector2Int destination, float speed)
     {
         m_entity = entity;
-        m_destinations = new List<Vector2Int>() { destination };
+        Destinations = new List<Vector2Int>() { destination };
         m_speed = speed;
     }
 }

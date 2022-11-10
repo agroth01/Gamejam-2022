@@ -112,7 +112,7 @@ public abstract class Unit : MonoBehaviour, IDamagable
 
             // Then we move the unit along the path.
             // TODO: Make the speed value not hardcoded. Not sure where to put it though...
-            MoveTo(path, 12 );
+            MoveToSpot(path, 12 );
 
             // Deal damage to the unit based on untraveled distance.
             // TODO: Pass multiplier. Or other effects.
@@ -135,12 +135,12 @@ public abstract class Unit : MonoBehaviour, IDamagable
     /// </summary>
     /// <param name="targetPositions">Positions to move to.</param>
     /// <param name="speed">Speed to move at</param>
-    public virtual void MoveTo(List<Vector2Int> targetPositions, float speed)
+    public virtual void MoveToSpot(List<Vector2Int> targetPositions, float speed)
     {
-        StartCoroutine(MoveToCoroutine(targetPositions, speed));
+        StartCoroutine(MoveTo(targetPositions, speed));
     }
 
-    private IEnumerator MoveToCoroutine(List<Vector2Int> targetPosition, float speed)
+    public IEnumerator MoveTo(List<Vector2Int> targetPosition, float speed)
     {
         while (targetPosition.Count > 0)
         {

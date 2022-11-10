@@ -15,7 +15,7 @@ public class PushAction : ICombatAction
     private Unit m_unit;
     private int m_tilesToPush;
 
-    public void Execute()
+    public IEnumerator Execute()
     {
         throw new System.NotImplementedException();
     }

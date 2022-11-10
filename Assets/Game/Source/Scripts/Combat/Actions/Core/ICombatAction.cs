@@ -7,5 +7,5 @@ public interface ICombatAction
     /// <summary>
     /// Executes the action.
     /// </summary>
-    public void Execute();
+    public IEnumerator Execute();
 }

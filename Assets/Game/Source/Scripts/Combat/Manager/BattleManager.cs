@@ -53,7 +53,7 @@ public class BattleManager : MonoBehaviour
     private void Start()
     {
         // For debugging, start player turn from here.
-        this.Invoke(StartPlayerTurn, 0.5f);
+        this.Invoke(StartPlayerTurn, 0.25f);
     }
 
     #region Queue
@@ -98,12 +98,7 @@ public class BattleManager : MonoBehaviour
 
         // All actions in the buffer will be added into the queue based
         // on their priority.
-        m_turnQueueBuffer.Sort((a, b) => a.Priority.CompareTo(b.Priority));
-        foreach (QueueBufferItem item in m_turnQueueBuffer)
-        {
-            m_turnQueue.AddAction(item.Action);
-        }
-        m_turnQueueBuffer.Clear();
+        BufferToQueue();       
 
         OnEnemyTurn?.Invoke();
         StartCoroutine(PerformEnemyActions());
@@ -117,7 +112,6 @@ public class BattleManager : MonoBehaviour
         // Enemies should choose their actions as soon as player turn starts,
         // so that player can plan around it.
         DetermineEnemyMoves();
-
 
         m_player.OnTurnStart();
         m_player.RestoreAP();
@@ -140,18 +134,21 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private IEnumerator PerformEnemyActions()
     {
-
+        
+        // Go through the logic for start of turn for each enemy unit.
+        // This is for tracking status effects.
         foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
         {
             enemy.OnTurnStart();
         }
 
-        // Go through all the actions in the queue and perform them.
+        // Now it is time to perform all actions that is in the queue.
+        // This will be any actions that is not moving, as that will happen
+        // later in this coroutine.
         while (m_turnQueue.Count > 0)
         {
             ICombatAction action = m_turnQueue.GetNextAction();
-            action.Execute();
-            yield return 0;
+            yield return action.Execute();
         }
 
         foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
@@ -159,8 +156,48 @@ public class BattleManager : MonoBehaviour
             enemy.OnTurnEnd();
         }
 
+        // Since we now have determined if the enemy should move, we can now
+        // loop through turn queue again, as units might want to move.
+        yield return HandleEnemyMovement();
+
         // When done, it goes back to being the player's turn.
         StartPlayerTurn();
+    }
+
+    /// <summary>
+    /// Moves all actions in the buffer into the queue based on their priority
+    /// </summary>
+    private void BufferToQueue()
+    {
+        m_turnQueueBuffer.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+        foreach (QueueBufferItem item in m_turnQueueBuffer)
+        {
+            m_turnQueue.AddAction(item.Action);
+        }
+        m_turnQueueBuffer.Clear();
+    }
+
+    /// <summary>
+    /// Gets all desired actions for movement from enemies and perform the actions.
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator HandleEnemyMovement()
+    {
+        // Start with running individual logic for each enemy where they want to move
+        foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
+        {
+            enemy.DetermineMove();
+        }
+
+        // Then, move the actions from buffer into queue
+        BufferToQueue();
+
+        // Finally, we loop through the action queue and perform those actions
+        while (m_turnQueue.Count > 0)
+        {
+            ICombatAction action = m_turnQueue.GetNextAction();
+            yield return action.Execute();
+        }
     }
 
     #endregion

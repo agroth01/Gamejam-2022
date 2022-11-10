@@ -35,6 +35,7 @@ public class OrbitCameraController : MonoBehaviour
             // stopping to move camera.
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+            
         }
         else
         {

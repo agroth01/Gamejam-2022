@@ -8,24 +8,21 @@
 // ------------------- */
 
 using Sirenix.OdinInspector;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Player : Entity, IDamagable
 {
-    [Header("Health")]
-    [SerializeField] private int m_maxHealth = 3;
-    [SerializeField] private int m_startingHealth = 3;
+    [Header("Speed")]
+    [SerializeField] private float m_moveSpeed; // how fast player should move visually
 
     [Header("Action Points")]
     [SerializeField] private int m_maxActionPoints = 5;
     [SerializeField] private int m_startingActionPoints = 5;
     [SerializeField] private int m_actionPointPoolSize = 3;
-
-    [Header("Movement")]
-    [SerializeField] private int m_moveCostPerTile;
-    [SerializeField] private float m_moveSpeed;
 
     [Header("Melee")]
     [SerializeField] private int m_meleeCost;
@@ -35,6 +32,11 @@ public class Player : Entity, IDamagable
     [Header("Mind blast")]
     [SerializeField] private int m_mindBlastCost;
     [SerializeField] private int m_mindBlastPushForce;
+
+    [Header("Blink")]
+    [SerializeField] private int m_blinkCost;
+    [SerializeField] private int m_blinkDistance;
+    [SerializeField] private int m_blinkDamage;
 
     // AP
     private ActionPoints m_actionPoints;
@@ -49,12 +51,19 @@ public class Player : Entity, IDamagable
         get { return m_actionPoints; }
     }
 
+    /// <summary>
+    /// The cost of moving one tile. 
+    /// </summary>
+    public int MoveCost
+    {
+        get { return m_movementAmount; }
+    }
+
     public override void Awake()
     {
         base.Awake();
         InitializeActionPoints();
     }
-
 
     public override void TakeDamage(int damage)
     {
@@ -69,10 +78,10 @@ public class Player : Entity, IDamagable
 
     #region Debugging
 
-    [Button("Add shield")]
-    public void AddShield()
+    [Button("Slow")]
+    public void Slow()
     {
-        AddStatusEffect(new ShieldStatusEffect(5));
+        AddStatusEffect(new SlowStatusEffect(3));
     }
 
     #endregion
@@ -116,7 +125,7 @@ public class Player : Entity, IDamagable
 
             // A path was found. Make sure that it is within the player's movement range.
             // Each item in path list equals one tile, so using the size is the same as distance
-            if (currentPath != null && (currentPath.Count * m_moveCostPerTile) <= m_actionPoints.TotalActionPoints)
+            if (currentPath != null && (currentPath.Count * MoveCost) <= m_actionPoints.TotalActionPoints)
             {
                 lineRenderer.positionCount = currentPath.Count + 1;
                 lineRenderer.SetPosition(0, Grid.Instance.GetWorldPosition(playerPosition.x, playerPosition.y));
@@ -150,10 +159,10 @@ public class Player : Entity, IDamagable
         if (isValid && !Input.GetKeyDown(KeyCode.Escape))
         {
             ICombatAction moveAction = new MoveAction(this, currentPath, m_moveSpeed);
-            moveAction.Execute();
+            yield return moveAction.Execute();
 
             // Subtract the cost of the move from the action points.
-            m_actionPoints.SpendActionPoints(distance * m_moveCostPerTile);
+            m_actionPoints.SpendActionPoints(distance * MoveCost);
         }
 
         // Clean up linerenderer after
@@ -276,6 +285,110 @@ public class Player : Entity, IDamagable
 
         // Subtract the cost of the move from the action points.
         m_actionPoints.SpendActionPoints(m_mindBlastCost);
+    }
+
+    /// <summary>
+    /// Performs a blink attack in the given direction
+    /// </summary>
+    public void StartBlinkAttack()
+    {
+        // Do we have enough action points to perform this action?
+        if (m_actionPoints.TotalActionPoints < m_blinkCost)
+        {
+            Debug.Log("Not enough action points to perform blink attack.");
+            return;
+        }
+
+        // For every direction, we need to check if there is anything blocking the path
+        // in all tiles in that direction. If there is, we have to blink in front of the
+        // blocking object.
+        Dictionary<Direction, Vector2Int> blinkPositions = new Dictionary<Direction, Vector2Int>();
+        Vector2Int playerPos = Grid.Instance.GetGridPosition(transform.position);
+        foreach (Direction dir in Enum.GetValues(typeof(Direction)))
+        {
+            // Traverse through all tiles in the given direction
+            Vector2Int currentPos = playerPos;
+            for (int i = 0; i < m_blinkDistance; i++)
+            {
+                // Is the next tile free?
+                Vector2Int nextPos = Grid.Instance.PositionWithDirection(currentPos, dir);
+                if (Grid.Instance.IsTileFree(nextPos)) currentPos = nextPos;
+
+                // Stop loop if hit something blocking.
+                else break;
+            }
+
+            if (currentPos != playerPos)
+            {
+                // We found a valid position to blink to.
+                blinkPositions.Add(dir, currentPos);
+            }
+        }
+
+        if (blinkPositions.Count > 0)
+            StartCoroutine(BlinkSelection(blinkPositions));
+    }
+
+    /// <summary>
+    /// Creates green highlights at the blink positions and waits until the user
+    /// either presses escape or clicks on one of the valid blink tiles.
+    /// </summary>
+    /// <param name="blinkPositions"></param>
+    /// <returns></returns>
+    private IEnumerator BlinkSelection(Dictionary<Direction, Vector2Int> blinkPositions)
+    {
+        // Start by creating green highlights at all valid blink positions.
+        List<GameObject> highlights = new List<GameObject>();        
+        foreach (Vector2Int pos in blinkPositions.Values)
+        {
+            // Cache the highlight for easy removal later
+            GameObject highlight = Grid.Instance.HighlightTile(pos, Color.green);
+            highlights.Add(highlight);
+        }
+
+        // While loop will only listen for escape input. The only other escape from while loop
+        // is clicking on a valid tile, which will break loop.
+        Vector2Int chosenPosition = Vector2Int.zero;
+        while (!Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                // Is the clicked tile one of the blink positions?
+                Vector2Int cursorPos = GetCursorGridPosition();
+                if (blinkPositions.ContainsValue(cursorPos))
+                {
+                    // We found a valid blink position. Break out of while loop.
+                    chosenPosition = cursorPos;
+                    break;
+                }
+            }
+
+            yield return 0;
+        }
+
+        // Clean up all highlights..
+        foreach (GameObject highlight in highlights)
+        {
+            Destroy(highlight);
+        }
+
+        // As long as we didn't manually cancel the action, we will perform the blink.
+        if (!Input.GetKeyDown(KeyCode.Escape))
+        {
+            // Create an instant move action and execute it here.
+            ICombatAction blink = new InstantMoveAction(this, chosenPosition);
+            blink.Execute();
+
+            // Subtract the cost of the move from the action points.
+            m_actionPoints.SpendActionPoints(m_blinkCost);
+
+            // For the final part of the attack, if there is an enemy the tile in front of us,
+            // they will be dealt damage.
+            Direction chosenDirection = blinkPositions.FirstOrDefault(x => x.Value == chosenPosition).Key;
+            Vector2Int damagePosition = Grid.Instance.PositionWithDirection(chosenPosition, chosenDirection);
+            ICombatAction damage = new SingleDamageAction(damagePosition, m_blinkDamage);
+            damage.Execute();
+        }
     }
 
     #endregion

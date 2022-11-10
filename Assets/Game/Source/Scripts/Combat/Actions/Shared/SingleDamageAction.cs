@@ -12,22 +12,24 @@ using UnityEngine;
 
 public class SingleDamageAction : ICombatAction
 {
-    private Vector2Int m_targetPosition;
-    private int m_damageAmount;
+    public Vector2Int TargetPosition { get; private set; }
+    public int DamageAmount { get; private set; }
 
-    public void Execute()
+    public IEnumerator Execute()
     {
         // Check if there is a target at the position.
-        IDamagable target = Grid.Instance.GetUnitAt(m_targetPosition);
+        IDamagable target = Grid.Instance.GetUnitAt(TargetPosition);
         if (target != null)
         {
-            target.TakeDamage(m_damageAmount);
+            target.TakeDamage(DamageAmount);
         }
+
+        yield return 0;
     }
 
     public SingleDamageAction(Vector2Int targetPosition, int damageAmount)
     {
-        m_targetPosition = targetPosition;
-        m_damageAmount = damageAmount;
+        TargetPosition = targetPosition;
+        DamageAmount = damageAmount;
     }
 }

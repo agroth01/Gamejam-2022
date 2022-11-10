@@ -16,16 +16,17 @@ public class InstantMoveAction : ICombatAction
     private Entity m_entity;
 
     // Where we will move to.
-    private Vector2Int m_targetPosition;
+    public Vector2Int TargetPosition { get; private set; }
 
-    public void Execute()
+    public IEnumerator Execute()
     {
-        m_entity.SetPosition(m_targetPosition.x, m_targetPosition.y);
+        m_entity.SetPosition(TargetPosition.x, TargetPosition.y);
+        yield return 0;
     }
 
     public InstantMoveAction(Entity entity, Vector2Int targetPosition)
     {
         m_entity = entity;
-        m_targetPosition = targetPosition;
+        TargetPosition = targetPosition;
     }
 }

@@ -21,6 +21,21 @@ public abstract class Entity : Unit, IPushable
     // Protected keyword is used for variables that are only accessible by the class itself and any inheriting classes.
     protected Health m_health;
 
+    [Header("Health")]
+    [SerializeField] protected int m_maxHealth;
+    [SerializeField] protected int m_startingHealth;
+
+    [Header("Movement")]
+    // For enemies, this will be the max amount of tiles they can move.
+    // For player, the cost for moving per tile.
+    [SerializeField] protected int m_movementAmount;
+
+    public int MovementSpeed
+    {
+        get { return m_movementAmount; }
+        set { m_movementAmount = value; }
+    }
+
     public override void Awake()
     {
         base.Awake();

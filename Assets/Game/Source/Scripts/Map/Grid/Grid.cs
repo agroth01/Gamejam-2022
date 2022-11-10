@@ -181,6 +181,20 @@ public class Grid : MonoBehaviour
     }
 
     /// <summary>
+    /// The distance between two points on the grid
+    /// </summary>
+    /// <param name="a">First position</param>
+    /// <param name="b">Second position</param>
+    /// <returns>Int with number of tiles</returns>
+    public int GetDistance(Vector2Int a, Vector2Int b)
+    {
+        List<Vector2Int> path = GetPath(a, b);
+        if (path == null)
+            Debug.Log("null");
+        return path.Count;
+    }
+
+    /// <summary>
     /// Checks if there are anything on the tile like a wall or unit. Returns true if not.
     /// </summary>
     /// <param name="position">The position to check</param>
@@ -189,7 +203,30 @@ public class Grid : MonoBehaviour
     {
         // We need to check the node to see if it is obstructed.
         Node node = m_navmesh.GetNodeAt(position.x, position.y);
-        return !node.IsObstructed;
+        if (node != null)
+            return !node.IsObstructed;
+        else return false;
+    }
+
+    /// <summary>
+    /// Determines if two positions are adjacent to each other.
+    /// Because the way the navmesh is programmed with units being considered not walkable,
+    /// we have to manually check each side instead of just getting distance.
+    /// </summary>
+    /// <param name="a">First position to check.</param>
+    /// <param name="b">Second position to check.</param>
+    /// <returns></returns>
+    public bool IsAdjecent(Vector2Int a, Vector2Int b)
+    {
+        // Loop through all directions
+        foreach (Direction dir in typeof(Direction).GetEnumValues())
+        {
+            // Is a's dir or b's dir equal to b's pos or a's pos?
+            if (PositionWithDirection(a, dir) == b || PositionWithDirection(b, dir) == a)
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>

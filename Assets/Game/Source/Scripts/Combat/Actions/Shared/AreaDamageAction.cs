@@ -12,18 +12,20 @@ using UnityEngine;
 
 public class AreaDamageAction : ICombatAction
 {
-    private List<ICombatAction> m_actions;
+    public List<SingleDamageAction> Actions { get; private set; }
 
-    public void Execute()
+
+    public IEnumerator Execute()
     {
-        foreach (ICombatAction action in m_actions)
+        foreach (SingleDamageAction action in Actions)
         {
             action.Execute();
         }
+        yield return 0;
     }
 
-    public AreaDamageAction(List<ICombatAction> actions)
+    public AreaDamageAction(List<SingleDamageAction> actions)
     {
-        m_actions = actions;
+        Actions = actions;
     }
 }
