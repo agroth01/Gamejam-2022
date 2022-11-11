@@ -78,6 +78,7 @@ public class BattleManager : MonoBehaviour
         // do anything else, as unit registration and automatic baking happens in unit script.
         Vector3 worldPos = Grid.Instance.GetWorldPosition(spawnPosition.x, spawnPosition.y);
         Unit unit = Instantiate(unitPrefab, worldPos, Quaternion.identity).GetComponent<Unit>();
+        unit.transform.parent = GameObject.Find("Entities").transform;
     }
 
     #endregion
