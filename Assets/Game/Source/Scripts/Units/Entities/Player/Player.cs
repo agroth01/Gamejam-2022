@@ -41,11 +41,6 @@ public class Player : Entity, IDamagable
     // AP
     private ActionPoints m_actionPoints;
 
-    public Health Health
-    {
-        get { return m_health; }
-    }
-
     public ActionPoints ActionPoints
     {
         get { return m_actionPoints; }
