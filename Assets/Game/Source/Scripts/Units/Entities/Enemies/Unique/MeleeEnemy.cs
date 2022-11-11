@@ -61,10 +61,32 @@ public class MeleeEnemy : Enemy
         Vector2Int playerPosition = Grid.Instance.GetGridPosition(GetPlayer().transform.position);
         if (Grid.Instance.IsAdjacent(playerPosition, GridPosition)) return;
 
+        
+        //Direction direction = Grid.Instance.GetDirectionTo(GridPosition, playerPosition);
+        //List<Vector2Int> path = Grid.Instance.GetPath(GridPosition, Grid.Instance.PositionWithDirection(playerPosition, direction));
+
         // We know now that we are not adjecent and need to move towards player. We find the tile adjecent
         // to the player that is closest, then calculate the path towards that tile and move as much as we can.
-        Direction direction = Grid.Instance.GetDirectionTo(GridPosition, playerPosition);
-        List<Vector2Int> path = Grid.Instance.GetPath(GridPosition, Grid.Instance.PositionWithDirection(playerPosition, direction));
+        List<Vector2Int> possiblePositions = Grid.Instance.GetFreeAdjacentTiles(playerPosition);
+
+        if (possiblePositions.Count == 0)
+        {
+            Debug.Log("No path available for enemy. Doing nothing");
+            return;
+        }
+
+        Vector2Int targetPosition = possiblePositions[0];
+        foreach (Vector2Int position in possiblePositions)
+        {
+            // Pick the closest position
+            if (Grid.Instance.GetDistance(position, GridPosition) < Grid.Instance.GetDistance(targetPosition, GridPosition))
+            {
+                targetPosition = position;
+            }
+        }
+        List<Vector2Int> path = Grid.Instance.GetPath(GridPosition, targetPosition);
+
+        
 
         // Remove all paths that are over the movement range of the enemy. This will be everything after the index
         // MovementSpeed - 1.
@@ -76,11 +98,6 @@ public class MeleeEnemy : Enemy
             // Finally, we create the action for moving and add it to queue once more.
             ICombatAction move = new MoveAction(this, path, m_physicalMovementSpeed);
             SetAction(move);
-        }
-
-        else
-        {
-            Debug.Log("No valid path was found to player.");
         }
     }
 

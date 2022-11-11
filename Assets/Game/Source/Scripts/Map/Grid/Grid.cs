@@ -145,6 +145,13 @@ public class Grid : MonoBehaviour
     public Vector3 GetWorldPosition(int x, int y)
     {
         Node nodeAtPosition = m_navmesh.GetNodeAt(x, y);
+
+        // I'm not sure why, i'm not sure how, but somehow returning Vector3.zero
+        // in this edgecase completely fixes the problem when enemies move along walls.
+        // This seems like a bad fix, because "it just works" and might bring problems
+        // later down the line, but that is a problem for future me.
+        // TODO: Pretend like we will fix this.
+        if (nodeAtPosition == null) return Vector3.zero;
         return nodeAtPosition.WorldPosition;
     }
 
@@ -238,7 +245,7 @@ public class Grid : MonoBehaviour
     {
         List<Vector2Int> path = GetPath(a, b);
         if (path == null)
-            Debug.Log("null");
+            return 0;
         return path.Count;
     }
 
@@ -293,7 +300,7 @@ public class Grid : MonoBehaviour
             Vector2Int pos = PositionWithDirection(position, dir);
 
             // Check if the position is free
-            if (IsTileFree(pos))
+            if (IsTileFree(pos) && IsInBounds(pos))
                 freeTiles.Add(pos);
         }
 

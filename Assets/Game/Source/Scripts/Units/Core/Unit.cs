@@ -146,6 +146,7 @@ public abstract class Unit : MonoBehaviour, IDamagable
         {
             // Get the world position of the first target position.
             Vector3 worldPos = Grid.Instance.GetWorldPosition(targetPosition[0].x, targetPosition[0].y);
+            
 
             // Get the distance between the entity and the target position.
             float distance = Vector3.Distance(transform.position, worldPos);
