@@ -129,6 +129,24 @@ public class Grid : MonoBehaviour
     }
 
     /// <summary>
+    /// Bakes the navmesh while including hazards. I would like to personally
+    /// thank our designer for coming with this late down the line, leading to
+    /// this hack.
+    /// </summary>
+    public void BakeWithHazards()
+    {
+        // First we make a list of positions of all the hazards on the grid
+        List<Vector2Int> hazardPositions = new List<Vector2Int>();
+        foreach (KeyValuePair<EnvironmentHazard, Vector2Int> hazard in m_hazardRegistry)
+        {
+            hazardPositions.Add(hazard.Value);
+        }
+
+        // And bake with that.
+        m_navmesh.Bake(hazardPositions);
+    }
+
+    /// <summary>
     /// Rebuilds the navmesh after a single frame.
     /// </summary>
     public void DelayedBake()

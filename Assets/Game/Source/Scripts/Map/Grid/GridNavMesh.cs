@@ -53,41 +53,25 @@ public class GridNavMesh
     #region Public Methods
 
     /// <summary>
-    /// Generates the navmesh from objects referenced.
+    /// Generates a new navmesh with obstacles and ground.
     /// </summary>
     public void Bake()
     {
-        float startTime = Time.realtimeSinceStartup;
+        // We include an empty list of the additional to make new system happy.
+        List<Vector2Int> additionalObstacles = new List<Vector2Int>();
+        InternalBake(GetObstaclePositions(), additionalObstacles);
+    }
 
-        // First get the size of mesh to initialize node array.
-        Vector2 navmeshSize = CalculateMeshSize();
-        m_size = navmeshSize;
-
-        // We then initialize the node array with size calculated.
-        // To start with, all nodes are walkable.
-        m_nodes = new Node[(int)navmeshSize.x, (int)navmeshSize.y];
-        for (int x = 0; x < navmeshSize.x; x++)
-        {
-            for (int y = 0; y < navmeshSize.y; y++)
-            {
-                Vector2Int gridPosition = new Vector2Int(x, y);
-                Vector3 worldPosition = new Vector3(x - m_xOffset, 1, y - m_yOffset);
-                m_nodes[x, y] = new Node(gridPosition, worldPosition, false);
-            }
-        }
-
-        // Finally, we go through all the obstacles and mark the nodes as unwalkable.
-        // Since this is comparing world position against grid position, we need to apply offset based on size.
-        List<Vector3> obstaclePositions = GetObstaclePositions();
-        foreach (Vector3 obstaclePosition in obstaclePositions)
-        {
-            int x = (int)obstaclePosition.x + m_xOffset;
-            int y = (int)obstaclePosition.z + m_yOffset;
-            m_nodes[x, y].IsObstructed = true;
-        }
-
-        // Debug for performance tests
-        //Debug.Log("Navmesh baked in " + (Time.realtimeSinceStartup - startTime) + " seconds.");
+    /// <summary>
+    /// Generates a new navmesh where you can add additional points
+    /// that will be considered obstructed. This is one entry into the 
+    /// long running series I like to call "Alex's Fantastical Hacks", and is
+    /// used for enemy navigation when there are hazards on the grid.
+    /// </summary>
+    /// <param name="additionalObsticles"></param>
+    public void Bake(List<Vector2Int> additionalObsticles)
+    {
+        InternalBake(GetObstaclePositions(), additionalObsticles);
     }
 
     /// <summary>
@@ -169,6 +153,42 @@ public class GridNavMesh
     #endregion
 
     #region Private Methods
+
+    private void InternalBake(List<Vector3> obstaclePositions, List<Vector2Int> additionalObstacles)
+    {
+        // First get the size of mesh to initialize node array.
+        Vector2 navmeshSize = CalculateMeshSize();
+        m_size = navmeshSize;
+
+        // We then initialize the node array with size calculated.
+        // To start with, all nodes are walkable.
+        m_nodes = new Node[(int)navmeshSize.x, (int)navmeshSize.y];
+        for (int x = 0; x < navmeshSize.x; x++)
+        {
+            for (int y = 0; y < navmeshSize.y; y++)
+            {
+                Vector2Int gridPosition = new Vector2Int(x, y);
+                Vector3 worldPosition = new Vector3(x - m_xOffset, 1, y - m_yOffset);
+                m_nodes[x, y] = new Node(gridPosition, worldPosition, false);
+            }
+        }
+
+        // Finally, we go through all the obstacles and mark the nodes as unwalkable.
+        // Since this is comparing world position against grid position, we need to apply offset based on size.
+        foreach (Vector3 obstaclePosition in obstaclePositions)
+        {
+            int x = (int)obstaclePosition.x + m_xOffset;
+            int y = (int)obstaclePosition.z + m_yOffset;
+            m_nodes[x, y].IsObstructed = true;
+        }
+
+        // Real finally. Include additional obsticles. These should already be respecting the offset
+        // so we will set the nodes directly without worrying about the offset.
+        foreach (Vector2Int additionalPosition in additionalObstacles)
+        {
+            m_nodes[additionalPosition.x, additionalPosition.y].IsObstructed = true;
+        }
+    }
 
     /// <summary>
     /// Determines the size of the mesh based on the ground tiles.
