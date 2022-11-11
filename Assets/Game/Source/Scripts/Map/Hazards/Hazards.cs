@@ -1,8 +1,8 @@
 // /* --------------------
 // -----------------------
-// Creation date: 05/11/2022
+// Creation date: 11/11/2022
 // Author: Alex
-// Description: This class is used to group up multiple combat actions for enemies to use during combat.
+// Description: All possible hazards that can be applied.
 // -----------------------
 // ------------------- */
 
@@ -10,7 +10,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CombatActionCollection
+public enum Hazards
 {
-    
+    Fire,
+    Poison
 }

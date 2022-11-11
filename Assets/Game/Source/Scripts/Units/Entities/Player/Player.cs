@@ -67,7 +67,6 @@ public class Player : Entity, IDamagable
 
     public override void TakeDamage(int damage)
     {
-        Debug.Log("Player took damage: " + damage);
         m_health.Damage(damage);
     }
 
@@ -204,8 +203,6 @@ public class Player : Entity, IDamagable
         IDamagable target = null;
         Vector2Int targetPosition = Vector2Int.zero;
 
-        Debug.Log("Starting melee");
-
         while(!Input.GetKeyDown(KeyCode.Escape))
         {
             // Raycast from cursor to check if whatever cursor is over has IDamagable interface
@@ -241,7 +238,7 @@ public class Player : Entity, IDamagable
         if (target != null)
         {
             ICombatAction melee = new SingleDamageAction(targetPosition, m_meleeDamage);
-            melee.Execute();
+            StartCoroutine(melee.Execute());
 
             // Subtract the cost of the move from the action points.
             m_actionPoints.SpendActionPoints(m_meleeCost);
@@ -377,7 +374,7 @@ public class Player : Entity, IDamagable
         {
             // Create an instant move action and execute it here.
             ICombatAction blink = new InstantMoveAction(this, chosenPosition);
-            blink.Execute();
+            StartCoroutine(blink.Execute());
 
             // Subtract the cost of the move from the action points.
             m_actionPoints.SpendActionPoints(m_blinkCost);
@@ -387,7 +384,7 @@ public class Player : Entity, IDamagable
             Direction chosenDirection = blinkPositions.FirstOrDefault(x => x.Value == chosenPosition).Key;
             Vector2Int damagePosition = Grid.Instance.PositionWithDirection(chosenPosition, chosenDirection);
             ICombatAction damage = new SingleDamageAction(damagePosition, m_blinkDamage);
-            damage.Execute();
+            StartCoroutine(damage.Execute());
         }
     }
 
@@ -419,11 +416,5 @@ public class Player : Entity, IDamagable
     private void InitializeActionPoints()
     {
         m_actionPoints = new ActionPoints(m_maxActionPoints, m_startingActionPoints, m_actionPointPoolSize);
-    }
-
-    public override void OnDeath()
-    {
-        Debug.Log("Player has died!");
-        Destroy(gameObject);
     }
 }
