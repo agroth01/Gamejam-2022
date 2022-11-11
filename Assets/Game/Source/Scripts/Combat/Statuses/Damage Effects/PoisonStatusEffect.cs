@@ -22,8 +22,6 @@ public class PoisonStatusEffect : StatusEffect
 
     public override void OnEndTurn(Unit unit)
     {
-        Debug.Log("Poisoned " + unit.name + " for " + m_damage + " damage!");
-
         // As always, check that there is a IDamagable interface
         IDamagable damagable = unit.GetComponent<IDamagable>();
         if (damagable != null)

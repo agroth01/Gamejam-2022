@@ -10,6 +10,7 @@
 using Sirenix.OdinInspector;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using UnityEngine;
 
 public class Grid : MonoBehaviour
@@ -26,6 +27,9 @@ public class Grid : MonoBehaviour
 
     // To track where units are on the grid, we store them along with their positions in a dictionary.
     private Dictionary<Unit, Vector2Int> m_unitRegistry;
+
+    // We will also have to track all hazards on the grid for easy application
+    private Dictionary<EnvironmentHazard, Vector2Int> m_hazardRegistry;
 
     // Singleton to access grid from any class. This is important, since anything modifying
     // the map will have to rebake the navmesh.
@@ -46,6 +50,7 @@ public class Grid : MonoBehaviour
 
         // Registy
         m_unitRegistry = new Dictionary<Unit, Vector2Int>();
+        m_hazardRegistry = new Dictionary<EnvironmentHazard, Vector2Int>();
     }
 
     #region Tiles
@@ -69,6 +74,49 @@ public class Grid : MonoBehaviour
 
     #endregion
 
+    #region Hazards
+
+    /// <summary>
+    /// Adds a hazard to the register to track it.
+    /// </summary>
+    /// <param name="hazard">The hazard to track</param>
+    /// <param name="position">Position of hazard on grid.</param>
+    public void RegisterHazard(EnvironmentHazard hazard, Vector2Int position)
+    {
+        m_hazardRegistry.Add(hazard, position);
+    }
+
+    /// <summary>
+    /// Unregisters a hazard from the grid. Since EnvironmentHazard is a class, we do not
+    /// have to worry about accidentally removing the wrong hazard, since it's a reference.
+    /// </summary>
+    /// <param name="hazard"></param>
+    public void UnregisterHazard(EnvironmentHazard hazard)
+    {
+        m_hazardRegistry.Remove(hazard);
+    }
+
+    /// <summary>
+    /// Returns the hazard at the given position. Will return null if there are no
+    /// hazard at that position.
+    /// </summary>
+    /// <param name="position">Grid position</param>
+    /// <returns>Hazard instance at that position.</returns>
+    public EnvironmentHazard GetHazardAt(Vector2Int position)
+    {
+        foreach (KeyValuePair<EnvironmentHazard, Vector2Int> hazard in m_hazardRegistry)
+        {
+            if (hazard.Value == position)
+            {
+                return hazard.Key;
+            }
+        }
+
+        return null;
+    }
+
+    #endregion
+
     #region Navigation
 
     /// <summary>
@@ -78,6 +126,24 @@ public class Grid : MonoBehaviour
     public void BakeNavMesh()
     {
         m_navmesh.Bake();
+    }
+
+    /// <summary>
+    /// Bakes the navmesh while including hazards. I would like to personally
+    /// thank our designer for coming with this late down the line, leading to
+    /// this hack.
+    /// </summary>
+    public void BakeWithHazards()
+    {
+        // First we make a list of positions of all the hazards on the grid
+        List<Vector2Int> hazardPositions = new List<Vector2Int>();
+        foreach (KeyValuePair<EnvironmentHazard, Vector2Int> hazard in m_hazardRegistry)
+        {
+            hazardPositions.Add(hazard.Value);
+        }
+
+        // And bake with that.
+        m_navmesh.Bake(hazardPositions);
     }
 
     /// <summary>
@@ -97,6 +163,13 @@ public class Grid : MonoBehaviour
     public Vector3 GetWorldPosition(int x, int y)
     {
         Node nodeAtPosition = m_navmesh.GetNodeAt(x, y);
+
+        // I'm not sure why, i'm not sure how, but somehow returning Vector3.zero
+        // in this edgecase completely fixes the problem when enemies move along walls.
+        // This seems like a bad fix, because "it just works" and might bring problems
+        // later down the line, but that is a problem for future me.
+        // TODO: Pretend like we will fix this.
+        if (nodeAtPosition == null) return Vector3.zero;
         return nodeAtPosition.WorldPosition;
     }
 
@@ -190,7 +263,7 @@ public class Grid : MonoBehaviour
     {
         List<Vector2Int> path = GetPath(a, b);
         if (path == null)
-            Debug.Log("null");
+            return 0;
         return path.Count;
     }
 
@@ -216,7 +289,7 @@ public class Grid : MonoBehaviour
     /// <param name="a">First position to check.</param>
     /// <param name="b">Second position to check.</param>
     /// <returns></returns>
-    public bool IsAdjecent(Vector2Int a, Vector2Int b)
+    public bool IsAdjacent(Vector2Int a, Vector2Int b)
     {
         // Loop through all directions
         foreach (Direction dir in typeof(Direction).GetEnumValues())
@@ -227,6 +300,108 @@ public class Grid : MonoBehaviour
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Returns all 4 tiles around the position that is not out of bounds or obstructed
+    /// </summary>
+    /// <param name="position"></param>
+    /// <returns></returns>
+    public List<Vector2Int> GetFreeAdjacentTiles(Vector2Int position)
+    {
+        List<Vector2Int> freeTiles = new List<Vector2Int>();
+
+        // Loop through all directions
+        foreach (Direction dir in typeof(Direction).GetEnumValues())
+        {
+            // Get the position with the direction applied
+            Vector2Int pos = PositionWithDirection(position, dir);
+
+            // Check if the position is free
+            if (IsTileFree(pos) && IsInBounds(pos))
+                freeTiles.Add(pos);
+        }
+
+        return freeTiles;
+    }
+
+    /// <summary>
+    /// Gets all tiles in 8 directions around the position.
+    /// </summary>
+    /// <param name="position">Position to check tiles around.</param>
+    /// <param name="radius">Radius to check</param>
+    /// <returns></returns>
+    public List<Vector2Int> GetSurroundingTiles(Vector2Int position, int radius = 1)
+    {
+        List<Vector2Int> tiles = new List<Vector2Int>();
+
+        // We check all tiles around the position
+        int range = 3 + (radius - 1);
+        for (int x = -range; x < range + 1; x++)
+        {
+            for (int y = -range; y < range + 1; y++)
+            {
+                // Skip the center tile
+                if (x == 0 && y == 0)
+                    continue;
+
+                Vector2Int tile = new Vector2Int(position.x + x, position.y + y);
+                if (IsInBounds(tile))
+                    tiles.Add(tile);
+            }
+        }
+
+        return tiles;
+    }
+
+    /// <summary>
+    /// Checks if there are any obstacles between two positions in a straight line.
+    /// </summary>
+    /// <param name="a">From position.</param>
+    /// <param name="b">To position.</param>
+    /// <returns></returns>
+    public bool LineOfSight(Vector2Int a, Vector2Int b)
+    {
+        // Make sure that they are in a straight line
+        if (!InStraightLine(a, b)) return false;
+
+        // Get the direction from a to b
+        Direction dir = GetDirectionTo(b, a);
+
+        // Get the distance between the two positions
+        int distance = GetDistance(a, b);
+
+        // Loop through all positions between a and b
+        Vector2Int checkPosition = a;
+        for (int i = 1; i < distance; i++)
+        {
+            // Get the position with the direction
+            Vector2Int pos = PositionWithDirection(checkPosition, dir);
+
+            // Check if the tile is free
+            if (!IsTileFree(pos))
+                return false;
+
+            // Set the position to check to the new position
+            checkPosition = pos;
+        }
+
+        // Finally, return true if there are no obstacles
+        return true;
+    }
+
+    /// <summary>
+    /// Determines if two points is in a straight line
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public bool InStraightLine(Vector2Int a, Vector2Int b)
+    {
+        // If the x or y is the same, they are in a straight line
+        if (a.x == b.x || a.y == b.y)
+            return true;
+        else return false;
     }
 
     /// <summary>
@@ -249,6 +424,16 @@ public class Grid : MonoBehaviour
     public Node GetNodeAt(int x, int y)
     {
         return m_navmesh.GetNodeAt(x, y);
+    }
+
+    /// <summary>
+    /// Checks if a position is within the bounds of the navmesh
+    /// </summary>
+    /// <param name="position">The position to check</param>
+    /// <returns></returns>
+    private bool IsInBounds(Vector2Int position)
+    {
+        return position.x >= 0 && position.x < m_navmesh.Width && position.y >= 0 && position.y < m_navmesh.Height;
     }
 
     #endregion

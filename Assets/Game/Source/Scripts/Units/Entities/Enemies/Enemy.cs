@@ -16,7 +16,6 @@ public abstract class Enemy : Entity, IPushable
     [Header("Generic")]
     [SerializeField] private string m_displayName;
     [SerializeField] private int m_actionPriority;
-    [SerializeField] private int m_maxTiles;   
 
     [Header("Highlights")]
     [SerializeField] private Color m_damageHighlightColor;
@@ -26,7 +25,7 @@ public abstract class Enemy : Entity, IPushable
     // Track the intended action, for automatic removal upon death
     private ICombatAction m_intendedAction;
 
-    public int Prority
+    public int Priority
     {
         get { return m_actionPriority; }
     }
@@ -87,8 +86,12 @@ public abstract class Enemy : Entity, IPushable
         BattleManager.Instance.RemoveActionFromQueue(action);
         ClearHighlights();
     }
-
-    public override void OnDeath()
+    
+    /// <summary>
+    /// Method that will be called when the enemy dies. When overriding, it is important
+    /// that the base is called AFTER custom logic, unless you want to override removal process.
+    /// </summary>
+    public virtual void OnDeath()
     {
         // Note that we do not need to clear the highlights here when the enemy dies,
         // because it is handled when removing action.
@@ -149,15 +152,15 @@ public abstract class Enemy : Entity, IPushable
             }
         }
 
-        // Normal move
-        if (action is MoveAction)
-        {
-            MoveAction moveAction = (MoveAction)action;
-            foreach (Vector2Int position in moveAction.Destinations)
-            {
-                highlights.Add(Grid.Instance.HighlightTile(position, m_moveHighlightColor));
-            }
-        }
+        //// Normal move
+        //if (action is MoveAction)
+        //{
+        //    MoveAction moveAction = (MoveAction)action;
+        //    foreach (Vector2Int position in moveAction.Destinations)
+        //    {
+        //        highlights.Add(Grid.Instance.HighlightTile(position, m_moveHighlightColor));
+        //    }
+        //}
 
         return highlights;
     }

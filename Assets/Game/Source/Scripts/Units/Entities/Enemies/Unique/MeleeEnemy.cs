@@ -29,11 +29,15 @@ public class MeleeEnemy : Enemy
         // Here, enemy will deal damage to the tile the player is on if the enemy is adjecent to player.
         // If enemy is not adjecent, enemy will perform alternate action.
         Vector2Int playerPosition = Grid.Instance.GetGridPosition(GetPlayer().transform.position);
-        if (Grid.Instance.IsAdjecent(playerPosition, GridPosition))
+        if (Grid.Instance.IsAdjacent(playerPosition, GridPosition))
         {
             // The player is adjecent. We get the direction to the player and create an attack action in that direction.
             Direction directionToPlayer = Grid.Instance.GetDirectionTo(playerPosition, GridPosition);
             Vector2Int attackPosition = Grid.Instance.PositionWithDirection(GridPosition, directionToPlayer);
+
+            // Cache the attack direction in case the enemy gets pushed, so that we can recalculate new attack position
+            // later.
+            m_attackDirection = directionToPlayer;
 
             // Store the action as a private variable, so that we can remove it later if we need to.
             m_action = new SingleDamageAction(attackPosition, m_damage);
@@ -47,37 +51,78 @@ public class MeleeEnemy : Enemy
         }
     }
 
-    /// <summary>
-    /// This is called after perfoming action queued from last turn. Will be called BEFORE DetermineAction().
-    /// </summary>
     public override void DetermineMove()
     {
-        // If enemy is not adjecent to the player, enemy will move to become adjecent to player.
-        // Otherwise, enemy skips moving.
-        Vector2Int playerPosition = Grid.Instance.GetGridPosition(GetPlayer().transform.position);
-        if (Grid.Instance.IsAdjecent(playerPosition, GridPosition)) return;
+        // To begin with, if the enemy is adjacent to the player, the enemy will not move.
+        Vector2Int playerPosition = GetPlayer().GridPosition;
+        if (Grid.Instance.IsAdjacent(playerPosition, GridPosition)) return;
 
-        // We know now that we are not adjecent and need to move towards player. We find the tile adjecent
-        // to the player that is closest, then calculate the path towards that tile and move as much as we can.
-        Direction direction = Grid.Instance.GetDirectionTo(GridPosition, playerPosition);
-        List<Vector2Int> path = Grid.Instance.GetPath(GridPosition, Grid.Instance.PositionWithDirection(playerPosition, direction));
+        // To start with, we will attempt to get a valid move position with hazards
+        // baked into the mesh. This way, the enemy will always try to avoid hazards if possible.
+        Grid.Instance.BakeWithHazards();
+        List<Vector2Int> path = GetPath();
+        if (path == null)
+        {
+            // If it gets here, it means there were no valid path with hazards baked into mesh.
+            // Therefore, we try again, but while ignoring hazards.
+            Grid.Instance.BakeNavMesh();
+            path = GetPath();
 
-        // Remove all paths that are over the movement range of the enemy. This will be everything after the index
-        // MovementSpeed - 1.
+            // If there still is no path, we just return and skip moving
+            if (path == null) return;
+        }
+
+        // Now that a path is determined, we can move the enemy along the path. Remove all points in
+        // path that is outside of movement range of enemy.
+        if (path.Count > MovementSpeed)
+        {
+            path.RemoveRange(MovementSpeed, path.Count - MovementSpeed);          
+        }
+
+        // Finally, we create the action for moving and add it to queue once more.
+        ICombatAction move = new MoveAction(this, path, m_physicalMovementSpeed);
+        SetAction(move);
+    }
+
+    /// <summary>
+    /// Finds the position to move into.
+    /// </summary>
+    /// <returns></returns>
+    private List<Vector2Int> GetPath()
+    {
+        // Find all the possible adjacent tiles to the player
+        Vector2Int playerPos = GetPlayer().GridPosition;
+        List<Vector2Int> potentialPositions = Grid.Instance.GetFreeAdjacentTiles(playerPos);
+
+        if (potentialPositions.Count == 0)
+        {
+            // In the case there are no adjacent tiles, we don't want to move. Maybe add some other
+            // behaviour here later. TODO.
+            return null;
+        }
+
+        // Now we go through each of the potential positions and determine which one is the
+        // closest to this enemy.
+        Vector2Int targetPosition = potentialPositions[0];
+        foreach (Vector2Int potentialPosition in potentialPositions)
+        {
+            // If the potential position is closer than the current target position, we set it as the new target position.
+            if (Grid.Instance.GetDistance(GridPosition, potentialPosition) < Grid.Instance.GetDistance(GridPosition, targetPosition))
+            {
+                targetPosition = potentialPosition;
+            }
+        }
+
+        // Now we have the target position, we can attempt to get a path for it.
+        List<Vector2Int> path = Grid.Instance.GetPath(GridPosition, targetPosition);
         if (path != null)
         {
-            if (path.Count > MovementSpeed)
-                path.RemoveRange(MovementSpeed, path.Count - MovementSpeed);
-
-            // Finally, we create the action for moving and add it to queue once more.
-            ICombatAction move = new MoveAction(this, path, m_physicalMovementSpeed);
-            SetAction(move);
+            // If we have a path, we can return it.
+            return path;
         }
 
-        else
-        {
-            Debug.Log("No valid path was found to player.");
-        }
+        // As default fallback, return null to notify that no path was found.
+        return null;
     }
 
     public override void OnFinishedMoving()

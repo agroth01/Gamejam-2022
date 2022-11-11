@@ -146,6 +146,7 @@ public abstract class Unit : MonoBehaviour, IDamagable
         {
             // Get the world position of the first target position.
             Vector3 worldPos = Grid.Instance.GetWorldPosition(targetPosition[0].x, targetPosition[0].y);
+            
 
             // Get the distance between the entity and the target position.
             float distance = Vector3.Distance(transform.position, worldPos);
@@ -160,12 +161,29 @@ public abstract class Unit : MonoBehaviour, IDamagable
 
             // Remove the first position from the list.
             targetPosition.RemoveAt(0);
+
+            // Now check if the unit is on a tile that has an effect.
+            CheckForHazard();
         }
 
         // After completion, we have to update the position in the grid registry.
         // This will automatically rebake the navmesh.
         Grid.Instance.UpdateUnit(this);
         OnFinishedMoving();
+    }
+
+    /// <summary>
+    /// Here we will check if the current position has a hazard on it. If so, we need to
+    /// apply the status effect of that hazard onto the unit. It is done here, because we
+    /// want to check after moving to each tile.
+    /// </summary>
+    private void CheckForHazard()
+    {
+        EnvironmentHazard hazard = Grid.Instance.GetHazardAt(GridPosition);
+        if (hazard != null)
+        {
+            hazard.ApplyHazard(this);
+        }
     }
 
     #region Status effects
