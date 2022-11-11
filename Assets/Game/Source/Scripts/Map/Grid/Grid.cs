@@ -278,6 +278,29 @@ public class Grid : MonoBehaviour
     }
 
     /// <summary>
+    /// Returns all 4 tiles around the position that is not out of bounds or obstructed
+    /// </summary>
+    /// <param name="position"></param>
+    /// <returns></returns>
+    public List<Vector2Int> GetFreeAdjacentTiles(Vector2Int position)
+    {
+        List<Vector2Int> freeTiles = new List<Vector2Int>();
+
+        // Loop through all directions
+        foreach (Direction dir in typeof(Direction).GetEnumValues())
+        {
+            // Get the position with the direction applied
+            Vector2Int pos = PositionWithDirection(position, dir);
+
+            // Check if the position is free
+            if (IsTileFree(pos))
+                freeTiles.Add(pos);
+        }
+
+        return freeTiles;
+    }
+
+    /// <summary>
     /// Gets all tiles in 8 directions around the position.
     /// </summary>
     /// <param name="position">Position to check tiles around.</param>

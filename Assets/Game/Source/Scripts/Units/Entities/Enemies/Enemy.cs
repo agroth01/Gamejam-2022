@@ -25,7 +25,7 @@ public abstract class Enemy : Entity, IPushable
     // Track the intended action, for automatic removal upon death
     private ICombatAction m_intendedAction;
 
-    public int Prority
+    public int Priority
     {
         get { return m_actionPriority; }
     }

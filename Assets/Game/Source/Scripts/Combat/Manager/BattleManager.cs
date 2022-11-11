@@ -211,20 +211,37 @@ public class BattleManager : MonoBehaviour
     private IEnumerator HandleEnemyMovement()
     {
         // Start with running individual logic for each enemy where they want to move
+        List<Enemy> enemies = new List<Enemy>();
         foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
         {
-            enemy.DetermineMove();
+            enemies.Add(enemy);
         }
 
-        // Then, move the actions from buffer into queue
-        BufferToQueue();
-
-        // Finally, we loop through the action queue and perform those actions
-        while (m_turnQueue.Count > 0)
+        
+        // This is a very hacky solution to fix the problem of enemies deciding to move into
+        // the same position. Essentially, instead of every enemy deciding where to move and then
+        // move one by one, each enemy decides where to move and then moves instantly.
+        enemies.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+        foreach (Enemy enemy in enemies)
         {
-            ICombatAction action = m_turnQueue.GetNextAction();
-            yield return action.Execute();
+            enemy.DetermineMove();
+            BufferToQueue();
+            while (m_turnQueue.Count > 0)
+            {
+                ICombatAction action = m_turnQueue.GetNextAction();
+                yield return action.Execute();
+            }
         }
+
+        //// Then, move the actions from buffer into queue
+        //BufferToQueue();
+
+        //// Finally, we loop through the action queue and perform those actions
+        //while (m_turnQueue.Count > 0)
+        //{
+        //    ICombatAction action = m_turnQueue.GetNextAction();
+        //    yield return action.Execute();
+        //}
     }
 
     #endregion
