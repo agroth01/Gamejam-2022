@@ -87,7 +87,7 @@ public class GridNavMesh
         }
 
         // Debug for performance tests
-        Debug.Log("Navmesh baked in " + (Time.realtimeSinceStartup - startTime) + " seconds.");
+        //Debug.Log("Navmesh baked in " + (Time.realtimeSinceStartup - startTime) + " seconds.");
     }
 
     /// <summary>

@@ -152,15 +152,15 @@ public abstract class Enemy : Entity, IPushable
             }
         }
 
-        // Normal move
-        if (action is MoveAction)
-        {
-            MoveAction moveAction = (MoveAction)action;
-            foreach (Vector2Int position in moveAction.Destinations)
-            {
-                highlights.Add(Grid.Instance.HighlightTile(position, m_moveHighlightColor));
-            }
-        }
+        //// Normal move
+        //if (action is MoveAction)
+        //{
+        //    MoveAction moveAction = (MoveAction)action;
+        //    foreach (Vector2Int position in moveAction.Destinations)
+        //    {
+        //        highlights.Add(Grid.Instance.HighlightTile(position, m_moveHighlightColor));
+        //    }
+        //}
 
         return highlights;
     }

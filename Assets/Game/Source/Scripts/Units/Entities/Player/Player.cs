@@ -67,7 +67,6 @@ public class Player : Entity, IDamagable
 
     public override void TakeDamage(int damage)
     {
-        Debug.Log("Player took damage: " + damage);
         m_health.Damage(damage);
     }
 

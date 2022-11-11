@@ -28,6 +28,9 @@ public class Grid : MonoBehaviour
     // To track where units are on the grid, we store them along with their positions in a dictionary.
     private Dictionary<Unit, Vector2Int> m_unitRegistry;
 
+    // We will also have to track all hazards on the grid for easy application
+    private Dictionary<EnvironmentHazard, Vector2Int> m_hazardRegistry;
+
     // Singleton to access grid from any class. This is important, since anything modifying
     // the map will have to rebake the navmesh.
     public static Grid Instance { get; private set; }
@@ -47,6 +50,7 @@ public class Grid : MonoBehaviour
 
         // Registy
         m_unitRegistry = new Dictionary<Unit, Vector2Int>();
+        m_hazardRegistry = new Dictionary<EnvironmentHazard, Vector2Int>();
     }
 
     #region Tiles
@@ -66,6 +70,49 @@ public class Grid : MonoBehaviour
         highlight.transform.position = GetWorldPosition(position.x, position.y);
 
         return highlight;
+    }
+
+    #endregion
+
+    #region Hazards
+
+    /// <summary>
+    /// Adds a hazard to the register to track it.
+    /// </summary>
+    /// <param name="hazard">The hazard to track</param>
+    /// <param name="position">Position of hazard on grid.</param>
+    public void RegisterHazard(EnvironmentHazard hazard, Vector2Int position)
+    {
+        m_hazardRegistry.Add(hazard, position);
+    }
+
+    /// <summary>
+    /// Unregisters a hazard from the grid. Since EnvironmentHazard is a class, we do not
+    /// have to worry about accidentally removing the wrong hazard, since it's a reference.
+    /// </summary>
+    /// <param name="hazard"></param>
+    public void UnregisterHazard(EnvironmentHazard hazard)
+    {
+        m_hazardRegistry.Remove(hazard);
+    }
+
+    /// <summary>
+    /// Returns the hazard at the given position. Will return null if there are no
+    /// hazard at that position.
+    /// </summary>
+    /// <param name="position">Grid position</param>
+    /// <returns>Hazard instance at that position.</returns>
+    public EnvironmentHazard GetHazardAt(Vector2Int position)
+    {
+        foreach (KeyValuePair<EnvironmentHazard, Vector2Int> hazard in m_hazardRegistry)
+        {
+            if (hazard.Value == position)
+            {
+                return hazard.Key;
+            }
+        }
+
+        return null;
     }
 
     #endregion
