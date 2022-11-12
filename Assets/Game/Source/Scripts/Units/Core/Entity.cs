@@ -30,6 +30,14 @@ public abstract class Entity : Unit, IPushable
     // For player, the cost for moving per tile.
     [SerializeField] protected int m_movementAmount;
 
+    /// <summary>
+    /// The health component of the entity
+    /// </summary>
+    public Health Health
+    {
+        get { return m_health; }
+    }
+
     public int MovementSpeed
     {
         get { return m_movementAmount; }
