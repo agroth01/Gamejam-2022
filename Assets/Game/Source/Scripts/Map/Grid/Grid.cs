@@ -215,6 +215,28 @@ public class Grid : MonoBehaviour
     }
 
     /// <summary>
+    /// Converts the direction enum into a direction in world space.
+    /// </summary>
+    /// <param name="direction"></param>
+    /// <returns></returns>
+    public Vector3 DirectionToWorldSpace(Direction direction)
+    {
+        switch (direction)
+        {
+            case Direction.Up:
+                return Vector3.forward;
+            case Direction.Down:
+                return Vector3.back;
+            case Direction.Left:
+                return Vector3.left;
+            case Direction.Right:
+                return Vector3.right;
+            default:
+                return Vector3.zero;
+        }
+    }
+
+    /// <summary>
     /// Converts coordinates in the world into a grid position.
     /// </summary>
     /// <param name="worldPosition">Position in world space</param>
