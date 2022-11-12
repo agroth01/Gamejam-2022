@@ -21,6 +21,9 @@ public abstract class Entity : Unit, IPushable
     // Protected keyword is used for variables that are only accessible by the class itself and any inheriting classes.
     protected Health m_health;
 
+    // All entities will have animation, so therefore we can include it here.
+    protected Animator m_animator;
+
     [Header("Health")]
     [SerializeField] protected int m_maxHealth;
     [SerializeField] protected int m_startingHealth;
@@ -44,15 +47,32 @@ public abstract class Entity : Unit, IPushable
         set { m_movementAmount = value; }
     }
 
+    public Animator Animator
+    {
+        get { return m_animator; }
+    }
+
     public override void Awake()
     {
         base.Awake();
         InitializeHealth();
+
+        // Find the animator component in either this object or children.
+        m_animator = GetComponentInChildren<Animator>();
     }
 
     public override void SetShield(int amount)
     {
         m_health.SetShield(amount);
+    }
+
+    /// <summary>
+    /// Turns the gameobject to face the given direction
+    /// </summary>
+    /// <param name="direction"></param>
+    public void FaceDirection(Direction direction)
+    {
+        transform.forward = Grid.Instance.DirectionToWorldSpace(direction);
     }
 
     public abstract void InitializeHealth();

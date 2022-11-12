@@ -146,7 +146,12 @@ public abstract class Unit : MonoBehaviour, IDamagable
         {
             // Get the world position of the first target position.
             Vector3 worldPos = Grid.Instance.GetWorldPosition(targetPosition[0].x, targetPosition[0].y);
-            
+
+            // Set the transform's forward direction to the movement direction, so unit always faces
+            // the direction it is moving. This is for keeping models facing the right direction.
+            Vector3 direction = worldPos - transform.position;
+            direction.y = 0;
+            transform.forward = direction;
 
             // Get the distance between the entity and the target position.
             float distance = Vector3.Distance(transform.position, worldPos);

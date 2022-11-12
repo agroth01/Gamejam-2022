@@ -32,11 +32,13 @@ public class Player : Entity, IDamagable
     [Header("Mind blast")]
     [SerializeField] private int m_mindBlastCost;
     [SerializeField] private int m_mindBlastPushForce;
+    [SerializeField] private float m_mindBlastWindupDelay;
 
     [Header("Blink")]
     [SerializeField] private int m_blinkCost;
     [SerializeField] private int m_blinkDistance;
     [SerializeField] private int m_blinkDamage;
+    [SerializeField] private float m_blinkWindupDelay;
 
     // AP
     private ActionPoints m_actionPoints;
@@ -152,15 +154,28 @@ public class Player : Entity, IDamagable
         // If the player clicked and not pressed escape, and the path is valid, move the player.
         if (isValid && !Input.GetKeyDown(KeyCode.Escape))
         {
+            // Set animator to running
+            Animator.SetBool("moving", true);
+
+            // Clean up linerenderer after
+            Destroy(lineRenderer.gameObject);
+
             ICombatAction moveAction = new MoveAction(this, currentPath, m_moveSpeed);
             yield return moveAction.Execute();
 
             // Subtract the cost of the move from the action points.
             m_actionPoints.SpendActionPoints(distance * MoveCost);
-        }
 
-        // Clean up linerenderer after
-        Destroy(lineRenderer.gameObject);
+            // Stop running animation
+            Animator.SetBool("moving", false);
+        }
+        
+        
+        else
+        {
+            // Clean up linerenderer after
+            Destroy(lineRenderer.gameObject);
+        }
     }
 
     /// <summary>
@@ -235,6 +250,12 @@ public class Player : Entity, IDamagable
             ICombatAction melee = new SingleDamageAction(targetPosition, m_meleeDamage);
             StartCoroutine(melee.Execute());
 
+            // Play attack animation and face towards enemy
+            Direction dir = Grid.Instance.GetDirectionTo(targetPosition, GridPosition);
+            FaceDirection(dir);
+            Animator.SetTrigger("melee");
+            
+
             // Subtract the cost of the move from the action points.
             m_actionPoints.SpendActionPoints(m_meleeCost);
         }
@@ -251,6 +272,14 @@ public class Player : Entity, IDamagable
             Debug.Log("Not enough action points to perform mindblast.");
             return;
         }
+
+        StartCoroutine(PerformMindblast());
+    }
+
+    private IEnumerator PerformMindblast()
+    {
+        Animator.SetTrigger("mindBlast");
+        yield return new WaitForSeconds(m_mindBlastWindupDelay);
 
         // Check for units above, below, right and left of player
         Vector2Int playerPos = Grid.Instance.GetGridPosition(transform.position);
@@ -367,6 +396,14 @@ public class Player : Entity, IDamagable
         // As long as we didn't manually cancel the action, we will perform the blink.
         if (!Input.GetKeyDown(KeyCode.Escape))
         {
+            // Rotate transform forward towards blink direction and start blink animation.
+            Direction dir = Grid.Instance.GetDirectionTo(chosenPosition, GridPosition);
+            FaceDirection(dir);
+
+            Animator.SetTrigger("blink");
+            yield return new WaitForSeconds(Animator.GetCurrentAnimatorClipInfo(0).Length);
+            //yield return new WaitForSeconds(m_blinkWindupDelay);
+
             // Create an instant move action and execute it here.
             ICombatAction blink = new InstantMoveAction(this, chosenPosition);
             StartCoroutine(blink.Execute());
