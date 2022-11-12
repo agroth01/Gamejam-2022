@@ -374,7 +374,7 @@ public class Grid : MonoBehaviour
         List<Vector2Int> tiles = new List<Vector2Int>();
 
         // We check all tiles around the position
-        int range = 3 + (radius - 1);
+        int range = 1 + (radius - 1);
         for (int x = -range; x < range + 1; x++)
         {
             for (int y = -range; y < range + 1; y++)

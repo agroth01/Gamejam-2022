@@ -26,7 +26,7 @@ public class RangedEnemy : Enemy
             return;
 
         // Get all tiles around the player
-        List<Vector2Int> targetTiles = Grid.Instance.GetSurroundingTiles(GetPlayer().GridPosition);
+        List<Vector2Int> targetTiles = Grid.Instance.GetSurroundingTiles(GetPlayer().GridPosition, 1);
         targetTiles.Add(GetPlayer().GridPosition);
 
         // Now we have to create the hazard
