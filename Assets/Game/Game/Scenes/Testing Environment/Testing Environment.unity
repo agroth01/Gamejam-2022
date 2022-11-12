@@ -18651,7 +18651,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1370041479}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 9, y: 1, z: -11}
+  m_LocalPosition: {x: 6, y: 1, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -18684,9 +18684,11 @@ MonoBehaviour:
   m_meleeDamage: 1
   m_mindBlastCost: 2
   m_mindBlastPushForce: 3
+  m_mindBlastWindupDelay: 0.6
   m_blinkCost: 3
   m_blinkDistance: 3
   m_blinkDamage: 1
+  m_blinkWindupDelay: 0
 --- !u!1 &1372326276
 GameObject:
   m_ObjectHideFlags: 0
