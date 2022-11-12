@@ -20,7 +20,7 @@ public class SpawnEnemyAction : ICombatAction
 
     public IEnumerator Execute()
     {
-        BattleManager.Instance.SpawnUnit(m_enemyPrefab, m_spawnPosition);
+        Grid.Instance.SpawnUnit(m_enemyPrefab, m_spawnPosition);
         yield return 0;
     }
 

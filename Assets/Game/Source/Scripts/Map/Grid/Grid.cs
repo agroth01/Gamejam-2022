@@ -115,6 +115,22 @@ public class Grid : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Returns a list of all hazards on the grid. Does not include position,
+    /// but positions can be manually found with GetGridPosition() if nedded.
+    /// </summary>
+    /// <returns></returns>
+    public List<EnvironmentHazard> GetAllHazards()
+    {
+        List<EnvironmentHazard> hazards = new List<EnvironmentHazard>();
+        foreach (KeyValuePair<EnvironmentHazard, Vector2Int> hazard in m_hazardRegistry)
+        {
+            hazards.Add(hazard.Key);
+        }
+
+        return hazards;
+    }
+
     #endregion
 
     #region Navigation
@@ -382,7 +398,7 @@ public class Grid : MonoBehaviour
     /// <param name="a">From position.</param>
     /// <param name="b">To position.</param>
     /// <returns></returns>
-    public bool LineOfSight(Vector2Int a, Vector2Int b)
+    public bool StraightLineOfSight(Vector2Int a, Vector2Int b)
     {
         // Make sure that they are in a straight line
         if (!InStraightLine(a, b)) return false;
@@ -399,6 +415,39 @@ public class Grid : MonoBehaviour
         {
             // Get the position with the direction
             Vector2Int pos = PositionWithDirection(checkPosition, dir);
+
+            // Check if the tile is free
+            if (!IsTileFree(pos))
+                return false;
+
+            // Set the position to check to the new position
+            checkPosition = pos;
+        }
+
+        // Finally, return true if there are no obstacles
+        return true;
+    }
+
+    /// <summary>
+    /// Determines if there are any obstacles between two positions diagonally
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public bool DiagonalLineOfSight(Vector2Int a, Vector2Int b)
+    {
+        Vector2Int dir = b - a;
+
+        // Check if the positions are in a diagonal line
+        if (Mathf.Abs(dir.x) != Mathf.Abs(dir.y))
+            return false;
+
+        // Check every diagonal tile between the two positions
+        Vector2Int checkPosition = a;
+        for (int i = 1; i < Mathf.Abs(dir.x); i++)
+        {
+            // Get the position with the direction
+            Vector2Int pos = PositionWithDirection(checkPosition, GetDirectionTo(b, a));
 
             // Check if the tile is free
             if (!IsTileFree(pos))
@@ -493,6 +542,29 @@ public class Grid : MonoBehaviour
 
         // Since a unit has moved, we need to rebake the navmesh.
         m_navmesh.Bake();
+    }
+
+    /// <summary>
+    /// Spawns a unit on the grid. Will throw an error message if the prefab does
+    /// not contain a unit script.
+    /// </summary>
+    /// <param name="unitPrefab">Prefab for the unit to spawn.</param>
+    /// <param name="spawnPosition">Position on grid to spawn.</param>
+    public void SpawnUnit(GameObject unitPrefab, Vector2Int spawnPosition)
+    {
+        // Check that prefab has unit component and throw error otherwise
+        if (unitPrefab.GetComponent<Unit>() == null)
+        {
+            Debug.LogError("Tried to spawn object " + unitPrefab.name + " but it does not contain a Unit component!");
+            return;
+        }
+
+        // To start with, we create the object as a child of entities gameobject, so that
+        // the newly created unit will be included when baking navmesh. We do not need to
+        // do anything else, as unit registration and automatic baking happens in unit script.
+        Vector3 worldPos = GetWorldPosition(spawnPosition.x, spawnPosition.y);
+        Unit unit = Instantiate(unitPrefab, worldPos, Quaternion.identity).GetComponent<Unit>();
+        unit.transform.parent = GameObject.Find("Entities").transform;
     }
 
     /// <summary>

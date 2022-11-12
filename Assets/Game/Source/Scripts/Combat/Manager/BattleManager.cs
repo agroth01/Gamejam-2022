@@ -27,11 +27,15 @@ public class BattleManager : MonoBehaviour
 
     // Track the player for easy access to methods and variables.
     private Player m_player;
-    private List<Enemy> m_enemies;
 
     // Events
-    public Action OnPlayerTurn;
-    public Action OnEnemyTurn;
+    public Action OnBattleStart;
+    public Action OnRoundStart;
+    public Action OnRoundEnd;
+    public Action OnPlayerTurnStart;
+    public Action OnPlayerTurnEnd;
+    public Action OnHostilesTurnStart;
+    public Action OnHostilesTurnEnd;
 
     private void Awake()
     {
@@ -44,41 +48,71 @@ public class BattleManager : MonoBehaviour
         m_turnQueue.Initialize();
         m_state = BattleState.Player;
         m_turnQueueBuffer = new List<QueueBufferItem>();
-
-        // Find the player. It is invoked with some delay, as it is not guaranteed to be
-        // registered in grid in Awake().
-        this.Invoke(() => m_player = (Player)Grid.Instance.GetUnitsOfType<Player>()[0], 0.25f);
     }
 
     private void Start()
     {
-        // For debugging, start player turn from here.
-        this.Invoke(StartPlayerTurn, 0.25f);
+        // Battle should start after a small delay. This delay is here to ensure that all scripts
+        // have finished initalizing.
+        //this.Invoke(StartBattle, 0.05f);
+        StartCoroutine(StartBattle());
     }
 
     #region Combat
 
     /// <summary>
-    /// Spawns a unit on the grid. Will throw an error message if the prefab does
-    /// not contain a unit script.
+    /// The first step when starting a new battle. Lets enemies move before starting first round.
     /// </summary>
-    /// <param name="unitPrefab">Prefab for the unit to spawn.</param>
-    /// <param name="spawnPosition">Position on grid to spawn.</param>
-    public void SpawnUnit(GameObject unitPrefab, Vector2Int spawnPosition)
+    public IEnumerator StartBattle()
     {
-        // Check that prefab has unit component and throw error otherwise
-        if (unitPrefab.GetComponent<Unit>() == null)
-        {
-            Debug.LogError("Tried to spawn object " + unitPrefab.name + " but it does not contain a Unit component!");
-            return;
-        }
-        
-        // To start with, we create the object as a child of entities gameobject, so that
-        // the newly created unit will be included when baking navmesh. We do not need to
-        // do anything else, as unit registration and automatic baking happens in unit script.
-        Vector3 worldPos = Grid.Instance.GetWorldPosition(spawnPosition.x, spawnPosition.y);
-        Unit unit = Instantiate(unitPrefab, worldPos, Quaternion.identity).GetComponent<Unit>();
-        unit.transform.parent = GameObject.Find("Entities").transform;
+        // Just to make sure that everything is properly initialized and registered, we wait one frame.
+        yield return new WaitForEndOfFrame();
+
+        // Call event to signal that the battle has started.
+        OnBattleStart?.Invoke();
+
+        // We find the reference to the player here, because attempting to find the player
+        // in awake will not always work, because of script run order.
+        m_player = (Player)Grid.Instance.GetUnitsOfType<Player>()[0];
+
+        // Now we allow all enemies to move before the round starts.
+        yield return StartCoroutine(HandleEnemyMovement());
+
+        // Finally, start the first round.
+        StartRound();
+    }
+
+    /// <summary>
+    /// At the start of each round, hazards will be updated, then enemies will determine their actions.
+    /// Finally, player turn starts.
+    /// </summary>
+    private void StartRound()
+    {
+        // Call the event to signal that the round has started.
+        OnRoundStart?.Invoke();
+
+        // Update hazards.
+        Grid.Instance.GetAllHazards().ForEach(hazard => hazard.UpdateHazard());
+
+        // Determine enemy actions.
+        DetermineEnemyActions();
+
+        // Finally we can start the player's turn.
+        StartPlayerTurn();
+    }
+
+    /// <summary>
+    /// Logic for end of round.
+    /// TODO: Check for win condition.
+    /// TODO: Add maybe some wait here?
+    /// </summary>
+    private void EndRound()
+    {
+        // Call event then start new round.
+        OnRoundEnd?.Invoke();
+
+        // Finally, start the new round
+        StartRound();
     }
 
     #endregion
@@ -89,10 +123,10 @@ public class BattleManager : MonoBehaviour
     /// Adds an action to the queue. Will be used during enemy turns.
     /// </summary>
     /// <param name="action">The action to add</param>
-    public void AddActionToQueue(ICombatAction action, int priority)
+    public void AddActionToQueue(Unit performer, ICombatAction action, int priority)
     {
         // Create new turn buffer item and add it.
-        QueueBufferItem item = new QueueBufferItem(priority, action);
+        QueueBufferItem item = new QueueBufferItem(performer, priority, action);
         m_turnQueueBuffer.Add(item);
     }
 
@@ -112,65 +146,74 @@ public class BattleManager : MonoBehaviour
     #region Turns
 
     /// <summary>
-    /// Starts performing all the actions for the enemies.
+    /// Starts the player turn.
     /// </summary>
-    public void StartEnemyTurn()
+    public void StartPlayerTurn()
     {
-        // Make sure we are not already in the enemy turn
+        // Call event to signal that the player turn has started.
+        OnPlayerTurnStart?.Invoke();
+
+        // Start of turn effects.
+        m_player.OnTurnStart();
+
+        m_player.RestoreAP();      
+        m_state = BattleState.Player;        
+    }
+
+    /// <summary>
+    /// Should be called once the player is done with turn. Will call any on turn end logic,
+    /// then start the hostiles turn.
+    /// </summary>
+    public void EndPlayerTurn()
+    {
+        // Make sure we are not already in the enemy turn.
         if (m_state == BattleState.Enemy) return;
-        m_state = BattleState.Enemy;
+
+        // Call the event to signal that the player turn has ended.
+        OnPlayerTurnEnd?.Invoke();
 
         // Apply effects for end of player turn
         m_player.OnTurnEnd();
 
-        // All actions in the buffer will be added into the queue based
-        // on their priority.
-        BufferToQueue();       
-
-        OnEnemyTurn?.Invoke();
-        StartCoroutine(PerformEnemyActions());
+        // Start the hostiles turn.
+        StartHostilesTurn();
     }
 
     /// <summary>
-    /// Marks the current state of battle as player
+    /// We now start the overarching turn for all enemies, which is referred to as hostiles as a group.
     /// </summary>
-    public void StartPlayerTurn()
+    public void StartHostilesTurn()
     {
-        m_player.OnTurnStart();
-        m_player.RestoreAP();
-        m_state = BattleState.Player;
-        OnPlayerTurn?.Invoke();
-    }
+        // Call the event to signal that the hostiles turn has started.
+        OnHostilesTurnStart?.Invoke();        
 
-    private void DetermineEnemyMoves()
-    {
-        // Since all units are already registered in the grid, we can loop through
-        // the registry and get all enemies.
-        foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
-        {
-            enemy.DetermineAction();
-        }
-    }
+        // All actions in the buffer will be added into the queue based
+        // on their priority.
+        BufferToQueue();       
+        
+        // Now all the actions that is in the queue can be executed.
+        StartCoroutine(PerformEnemyActionTurns());
+    }      
 
     /// <summary>
     /// Coroutine that will perform all the actions for the enemies.
     /// </summary>
-    private IEnumerator PerformEnemyActions()
+    private IEnumerator PerformEnemyActionTurns()
     {
-        
-        // Go through the logic for start of turn for each enemy unit.
-        // This is for tracking status effects.
-        foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
-        {
-            enemy.OnTurnStart();
-        }
-
         // Now it is time to perform all actions that is in the queue.
         // This will be any actions that is not moving, as that will happen
         // later in this coroutine.
         while (m_turnQueue.Count > 0)
         {
-            ICombatAction action = m_turnQueue.GetNextAction();
+            TurnQueueItem next = m_turnQueue.GetNext();
+
+            // Key of next is the sender, so we can get the unit from there. We also
+            // have to make sure that the enemy is still alive.
+            if (next.Unit == null) continue;
+            next.Unit.OnTurnStart();
+
+            // Retrieve the action and execute it.
+            ICombatAction action = next.Action;
             yield return action.Execute();
         }
 
@@ -178,17 +221,11 @@ public class BattleManager : MonoBehaviour
         // loop through turn queue again, as units might want to move.
         yield return HandleEnemyMovement();
 
-        // End of turn effects gets processed here
-        foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
-        {
-            enemy.OnTurnEnd();
-        }
+        // Call event since hostiles turn has ended.
+        OnHostilesTurnEnd?.Invoke();
 
-        // Enemies should then choose their new moves for next round after having moved.
-        DetermineEnemyMoves();
-
-        // When done, it goes back to being the player's turn.
-        StartPlayerTurn();
+        // When all enemies have moved, end of round is called.
+        EndRound();
     }
 
     /// <summary>
@@ -199,9 +236,19 @@ public class BattleManager : MonoBehaviour
         m_turnQueueBuffer.Sort((a, b) => a.Priority.CompareTo(b.Priority));
         foreach (QueueBufferItem item in m_turnQueueBuffer)
         {
-            m_turnQueue.AddAction(item.Action);
+            m_turnQueue.AddAction(item.Owner, item.Action);
         }
         m_turnQueueBuffer.Clear();
+    }
+
+    private void DetermineEnemyActions()
+    {
+        // Since all units are already registered in the grid, we can loop through
+        // the registry and get all enemies.
+        foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
+        {
+            enemy.DetermineAction();
+        }
     }
 
     /// <summary>
@@ -210,14 +257,13 @@ public class BattleManager : MonoBehaviour
     /// <returns></returns>
     private IEnumerator HandleEnemyMovement()
     {
-        // Start with running individual logic for each enemy where they want to move
+        // Collect list of all enemies alive on grid.
         List<Enemy> enemies = new List<Enemy>();
         foreach (Enemy enemy in Grid.Instance.GetUnitsOfType<Enemy>())
         {
             enemies.Add(enemy);
         }
-
-        
+    
         // This is a very hacky solution to fix the problem of enemies deciding to move into
         // the same position. Essentially, instead of every enemy deciding where to move and then
         // move one by one, each enemy decides where to move and then moves instantly.
@@ -228,20 +274,14 @@ public class BattleManager : MonoBehaviour
             BufferToQueue();
             while (m_turnQueue.Count > 0)
             {
-                ICombatAction action = m_turnQueue.GetNextAction();
+                ICombatAction action = m_turnQueue.GetNext().Action;
                 yield return action.Execute();
+                
             }
+
+            // After having moved, we can finally call onturnend
+            enemy.OnTurnEnd();
         }
-
-        //// Then, move the actions from buffer into queue
-        //BufferToQueue();
-
-        //// Finally, we loop through the action queue and perform those actions
-        //while (m_turnQueue.Count > 0)
-        //{
-        //    ICombatAction action = m_turnQueue.GetNextAction();
-        //    yield return action.Execute();
-        //}
     }
 
     #endregion

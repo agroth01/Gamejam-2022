@@ -68,7 +68,7 @@ public abstract class Enemy : Entity, IPushable
     public void SetAction(ICombatAction action)
     {
         // Add it to the queue for when it's enemies turn to attack.
-        BattleManager.Instance.AddActionToQueue(action, m_actionPriority);
+        BattleManager.Instance.AddActionToQueue(this, action, m_actionPriority);
         m_intendedAction = action;
 
         // Set up highlights for the action
