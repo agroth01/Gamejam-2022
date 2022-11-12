@@ -38,6 +38,13 @@ public class EnvironmentHazard : MonoBehaviour
         Grid.Instance.RegisterHazard(this, position);
 
         m_roundsAlive = 0;
+
+        // Only for when the hazard is first created, check if there is a unit on the tile
+        // and apply effect if there is.
+        if (Grid.Instance.GetUnitAt(position) != null)
+        {
+            ApplyHazard(Grid.Instance.GetUnitAt(position));
+        }
     }
 
     private void OnDisable()
