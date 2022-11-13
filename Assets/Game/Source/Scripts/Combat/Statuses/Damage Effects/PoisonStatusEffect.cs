@@ -11,8 +11,13 @@ using UnityEngine;
 
 public class PoisonStatusEffect : StatusEffect
 {
-    private int m_damage;
-    private int m_duration;
+    private int m_damage = 1;
+    private int m_duration = 2;
+
+    public PoisonStatusEffect()
+    {
+        
+    }
 
     public PoisonStatusEffect(int damage, int duration)
     {

@@ -10,8 +10,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum Hazards
+public enum Hazard
 {
     Fire,
-    Poison
+    Poison,
+    Laser
 }

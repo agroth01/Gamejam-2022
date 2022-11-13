@@ -66,7 +66,7 @@ public class BattleManager : MonoBehaviour
     public IEnumerator StartBattle()
     {
         // Just to make sure that everything is properly initialized and registered, we wait one frame.
-        yield return new WaitForEndOfFrame();
+        yield return new WaitForSeconds(0.05f);
 
         // Call event to signal that the battle has started.
         OnBattleStart?.Invoke();

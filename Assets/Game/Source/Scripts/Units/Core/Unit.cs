@@ -255,6 +255,7 @@ public abstract class Unit : MonoBehaviour, IDamagable
     public virtual void OnTurnEnd()
     {
         TurnEndEffects();
+        CheckForHazard();
     }
 
     #endregion

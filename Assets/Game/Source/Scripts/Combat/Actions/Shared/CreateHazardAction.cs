@@ -5,9 +5,8 @@ using UnityEngine;
 public class CreateHazardAction : ICombatAction
 {
     private List<Vector2Int> m_positions;
-    private Hazards m_hazardType;
+    private Hazard m_hazardType;
     private int m_hazardDamage;
-    private int m_hazardEffectDuration;
     private int m_hazardDuration;
 
     public IEnumerator Execute()
@@ -20,28 +19,24 @@ public class CreateHazardAction : ICombatAction
             // without having to check if tile is obstructed. If no unit, we will just go off obsturction.
             if (Grid.Instance.GetUnitAt(position) != null || Grid.Instance.IsTileFree(position))
             {
-                EnvironmentHazard.CreateHazard(m_hazardType, m_hazardDuration, m_hazardEffectDuration, m_hazardDamage, position);
+                EnvironmentHazard.CreateHazard(m_hazardType, m_hazardDuration, position);
             }
             yield return 0;
         }       
     }
 
-    public CreateHazardAction(List<Vector2Int> positions, Hazards hazardType, int hazardDamage, int hazardDuration, int hazardEffectDuration)
+    public CreateHazardAction(List<Vector2Int> positions, Hazard hazardType, int hazardDuration)
     {
         m_positions = positions;
         m_hazardType = hazardType;
-        m_hazardDamage = hazardDamage;
         m_hazardDuration = hazardDuration;
-        m_hazardEffectDuration = hazardEffectDuration;
     }
 
-    public CreateHazardAction(Vector2Int position, Hazards hazardType, int hazardDamage, int hazardDuration, int hazardEffectDuration)
+    public CreateHazardAction(Vector2Int position, Hazard hazardType, int hazardDuration)
     {
         m_positions = new List<Vector2Int>();
         m_positions.Add(position);
         m_hazardType = hazardType;
-        m_hazardDamage = hazardDamage;
         m_hazardDuration = hazardDuration;
-        m_hazardEffectDuration = hazardEffectDuration;
     }
 }

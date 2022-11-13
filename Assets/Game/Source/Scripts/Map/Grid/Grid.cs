@@ -292,6 +292,34 @@ public class Grid : MonoBehaviour
     }
 
     /// <summary>
+    /// Gets all tiles between two points. Has to be in a straight line, otherwise null is returned.
+    /// </summary>
+    /// <param name="a">First position</param>
+    /// <param name="b">Second position</param>
+    /// <returns></returns>
+    public List<Vector2Int> GetTilesBetween(Vector2Int a, Vector2Int b)
+    {
+        // Make sure the positions are in a straight line
+        if (!InStraightLine(a, b)) return null;
+
+        List<Vector2Int> tiles = new List<Vector2Int>();
+
+        // Get the direction to the target
+        Direction direction = GetDirectionTo(b, a);
+
+        // This smells a bit like it will be an infinite loop....
+        // hopefully not.
+        Vector2Int current = PositionWithDirection(a, direction);
+        while (current != b)
+        {
+            tiles.Add(current);
+            current = PositionWithDirection(current, direction);
+        }
+
+        return tiles;
+    }
+
+    /// <summary>
     /// The distance between two points on the grid
     /// </summary>
     /// <param name="a">First position</param>
