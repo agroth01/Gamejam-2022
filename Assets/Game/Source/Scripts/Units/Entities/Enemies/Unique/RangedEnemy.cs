@@ -19,17 +19,19 @@ public class RangedEnemy : Enemy
 
     public override void DetermineAction()
     {
-        // First determine if the enemy is in range of the player. Skip action otherwise.
-        if (Grid.Instance.GetDistance(GridPosition, GetPlayer().GridPosition) > m_range)
-            return;
+        //// First determine if the enemy is in range of the player. Skip action otherwise.
+        //if (Grid.Instance.GetDistance(GridPosition, GetPlayer().GridPosition) > m_range)
+        //    return;
 
-        // Get all tiles around the player
-        List<Vector2Int> targetTiles = Grid.Instance.GetSurroundingTiles(GetPlayer().GridPosition, 1);
-        targetTiles.Add(GetPlayer().GridPosition);
+        //// Get all tiles around the player
+        //List<Vector2Int> targetTiles = Grid.Instance.GetSurroundingTiles(GetPlayer().GridPosition, 1);
+        //targetTiles.Add(GetPlayer().GridPosition);
 
-        // Now we have to create the hazard
-        ICombatAction hazardCreation = new CreateHazardAction(targetTiles, m_hazardType, m_hazardDuration);
-        SetAction(hazardCreation);
+        //// Now we have to create the hazard
+        //ICombatAction hazardCreation = new CreateHazardAction(targetTiles, m_hazardType, m_hazardDuration);
+        //SetAction(hazardCreation);
+
+        Debug.Log(LineOfSightToPlayer());
     }
 
     public override void DetermineMove()

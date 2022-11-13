@@ -122,6 +122,26 @@ public abstract class Enemy : Entity, IPushable
         return (Player)Grid.Instance.GetUnitsOfType<Player>()[0];
     }
 
+    public bool LineOfSightToPlayer()
+    {
+        // First we attempt to see the player with Bresenham algorithm.
+        Vector2Int player = GetPlayer().GridPosition;
+        List<Vector2Int> points = Grid.Instance.BresenhamLine(GridPosition.x, GridPosition.y, player.x, player.y);
+        foreach (Vector2Int point in points)
+        {
+            if (!Grid.Instance.IsTileFree(point))
+            {
+                if (point != player && point != GridPosition)
+                    return false;
+            }
+        }
+
+
+        
+        return true;
+    }
+
+
     #endregion
 
     #region Highlights
