@@ -12,8 +12,13 @@ using UnityEngine;
 
 public class FireStatusEffect : StatusEffect
 {
-    private int m_damage;
-    private int m_duration;
+    private int m_damage = 1;
+    private int m_duration = 2;
+
+    public FireStatusEffect()
+    {
+        
+    }
 
     public FireStatusEffect(int damage, int duration)
     {
