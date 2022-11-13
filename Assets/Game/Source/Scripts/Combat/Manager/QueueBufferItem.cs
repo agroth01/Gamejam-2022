@@ -13,11 +13,13 @@ using UnityEngine;
 
 public struct QueueBufferItem
 {
+    public Unit Owner;
     public int Priority;
     public ICombatAction Action;
 
-    public QueueBufferItem(int priority, ICombatAction action)
+    public QueueBufferItem(Unit owner, int priority, ICombatAction action)
     {
+        Owner = owner;
         Priority = priority;
         Action = action;
     }
