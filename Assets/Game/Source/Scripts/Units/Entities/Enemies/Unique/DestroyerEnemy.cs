@@ -18,8 +18,7 @@ public class DestroyerEnemy : Enemy
     public int m_chargeRange;
     public int m_chargeDamage;
     public int m_chargeSpeed;
-    private bool m_isCharging;
-    private Vector2Int m_chargePosition;
+    public int m_chargeKnockback;
 
     [Header("Iron Fist")]
     public int m_fistDamage;
@@ -27,9 +26,13 @@ public class DestroyerEnemy : Enemy
     [Header("Toxic Grenade")]
     public int m_grenadeRange;
     public int m_grenadeRadius;
+    public Hazard m_grenadeHazardType;
+    public int m_grenadeHazardDuration;
 
     public override void DetermineAction()
     {
+        ClearHighlights();
+        
         // Charge will be prioritized if the enemy is in a straight line, and is more than 1 tile away.
         // If the player is 1 tile away, a normal melee attack will be performed instead.
         // Else, ranged attack will be performed.
@@ -55,45 +58,37 @@ public class DestroyerEnemy : Enemy
         // First we have to determine if we can charge the whole way, or if we have to stop early.
         // If we have to stop, determine what we hit and deal damage to the tile stopping enemy.
         Vector2Int playerPosition = GetPlayer().GridPosition;
-        Direction direction = Grid.Instance.GetDirectionTo(playerPosition, GridPosition);
 
-        Vector2Int chargePosition = GridPosition;
-        Vector2Int nextPosition = Grid.Instance.PositionWithDirection(chargePosition, direction);
-        int distance = 0;
+        // Get all tiles in a straight line between enemy and player and highlight them
+        List<Vector2Int> tiles = Grid.Instance.GetTilesBetween(playerPosition, GridPosition);
+        tiles.Add(playerPosition);
+        CreateHighlight(tiles, Color.red);
 
-        // I pray this does not cause an infinite while loop. Tired of restarting editor.
-        while (distance < m_chargeRange)
-        {
-            if (!Grid.Instance.IsTileFree(nextPosition))
-            {
-                // We hit something. Deal damage to it.
-                ICombatAction action = new SingleDamageAction(nextPosition, m_chargeDamage);
-                SetAction(action);
-                return;
-            }
-
-            else
-            {
-                // We hit nothing. Continue charging.
-                chargePosition = nextPosition;
-                nextPosition = Grid.Instance.PositionWithDirection(chargePosition, direction);
-                distance++;
-            }
-        }
-
-        // A bit hacky, but we have to do this to make the enemy move.
-        m_chargePosition = chargePosition;
-        m_isCharging = true;
+        ICombatAction charge = new ChargeAction(this, playerPosition, m_chargeRange, m_chargeDamage, m_chargeKnockback, m_chargeSpeed);
+        SetAction(charge);
     }
 
     private void Fist()
     {
-        
+        // Performs melee attack where player currently is.
+        Vector2Int playerPosition = GetPlayer().GridPosition;
+
+        CreateHighlight(playerPosition, Color.red);
+
+        ICombatAction damage = new SingleDamageAction(playerPosition, m_fistDamage);
+        SetAction(damage);
     }
 
     private void Grenade()
     {
+        List<Vector2Int> targetTiles = Grid.Instance.GetSurroundingTiles(GetPlayer().GridPosition, m_grenadeRadius);
+        targetTiles.Add(GetPlayer().GridPosition);
 
+        CreateHighlight(targetTiles, Color.red);
+
+        // Now we have to create the hazard
+        ICombatAction hazardCreation = new CreateHazardAction(targetTiles, m_grenadeHazardType, m_grenadeHazardDuration);
+        SetAction(hazardCreation);
     }
 
     public override void DetermineMove()
@@ -111,13 +106,12 @@ public class DestroyerEnemy : Enemy
 
         // Go through each adjacent tile to determine which one is the closest to enemy current position.
         Vector2Int targetPosition = adjacentPositions[0];
-        foreach (Vector2Int position in Grid.Instance.GetFreeAdjacentTiles(GetPlayer().GridPosition))
+        foreach (Vector2Int potentialPosition in adjacentPositions)
         {
-            // Pick the shortest path to the player
-            int distance = Grid.Instance.GetDistance(GridPosition, position);
-            if (distance > Grid.Instance.GetDistance(targetPosition, position))
+            // If the potential position is closer than the current target position, we set it as the new target position.
+            if (Grid.Instance.GetDistance(GridPosition, potentialPosition) < Grid.Instance.GetDistance(GridPosition, targetPosition))
             {
-                targetPosition = position;
+                targetPosition = potentialPosition;
             }
         }
 

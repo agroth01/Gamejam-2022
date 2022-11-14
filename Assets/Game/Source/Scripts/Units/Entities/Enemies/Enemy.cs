@@ -76,11 +76,6 @@ public abstract class Enemy : Entity, IPushable
         // Add it to the queue for when it's enemies turn to attack.
         BattleManager.Instance.AddActionToQueue(this, action, m_actionPriority);
         m_intendedAction = action;
-
-        // Set up highlights for the action
-        ClearHighlights();
-        m_highlights = CreateHighlights(action);
-        HideHighlights();
     }
 
     /// <summary>
@@ -155,44 +150,34 @@ public abstract class Enemy : Entity, IPushable
     /// </summary>
     /// <param name="action"></param>
     /// <returns></returns>
-    private List<GameObject> CreateHighlights(ICombatAction action)
+    public void CreateHighlight(List<Vector2Int> positions, Color color)
     {
-        List<GameObject> highlights = new List<GameObject>();
+        if (m_highlights == null) m_highlights = new List<GameObject>();
 
-        // Single target damage
-        if (action is SingleDamageAction)
+        foreach (Vector2Int position in positions)
         {
-            SingleDamageAction singleDamageAction = (SingleDamageAction)action;
-            highlights.Add(Grid.Instance.HighlightTile(singleDamageAction.TargetPosition, m_damageHighlightColor));
+            GameObject highlight = Grid.Instance.HighlightTile(position, color);
+            highlight.SetActive(false);
+            m_highlights.Add(highlight);
         }
+    }
 
-        // Area Damage Action
-        if (action is AreaDamageAction)
-        {
-            AreaDamageAction areaDamageAction = (AreaDamageAction)action;
-            foreach (SingleDamageAction sda in areaDamageAction.Actions)
-            {
-                highlights.Add(Grid.Instance.HighlightTile(sda.TargetPosition, m_damageHighlightColor));
-            }
-        }
-
-        //// Normal move
-        //if (action is MoveAction)
-        //{
-        //    MoveAction moveAction = (MoveAction)action;
-        //    foreach (Vector2Int position in moveAction.Destinations)
-        //    {
-        //        highlights.Add(Grid.Instance.HighlightTile(position, m_moveHighlightColor));
-        //    }
-        //}
-
-        return highlights;
+    /// <summary>
+    /// Creates highlights based on the type of action is performed
+    /// </summary>
+    /// <param name="action"></param>
+    /// <returns></returns>
+    public void CreateHighlight(Vector2Int position, Color color)
+    {
+        if (m_highlights == null) m_highlights = new List<GameObject>();
+        GameObject highlight = Grid.Instance.HighlightTile(position, color);
+        m_highlights.Add(highlight);
     }
 
     /// <summary>
     /// Destroys all highlight objects
     /// </summary>
-    private void ClearHighlights()
+    public void ClearHighlights()
     {
         if (m_highlights == null) return;
 

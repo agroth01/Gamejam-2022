@@ -69,6 +69,7 @@ public class Grid : MonoBehaviour
         GameObject highlight = Instantiate(highlightPrefab);
         highlight.GetComponentInChildren<Renderer>().material.color = highlightColor;
         highlight.transform.position = GetWorldPosition(position.x, position.y);
+        highlight.SetActive(false);
 
         return highlight;
     }
@@ -393,6 +394,16 @@ public class Grid : MonoBehaviour
     }
 
     /// <summary>
+    /// Checks if a specific tile has a unit on it
+    /// </summary>
+    /// <param name="position"></param>
+    /// <returns></returns>
+    public bool HasUnit(Vector2Int position)
+    {
+        return GetUnitAt(position) != null;
+    }
+
+    /// <summary>
     /// Gets all tiles in 8 directions around the position.
     /// </summary>
     /// <param name="position">Position to check tiles around.</param>
@@ -467,75 +478,6 @@ public class Grid : MonoBehaviour
         }
 
         return points;
-    }
-
-    /// <summary>
-    /// Checks if there are any obstacles between two positions in a straight line.
-    /// </summary>
-    /// <param name="a">From position.</param>
-    /// <param name="b">To position.</param>
-    /// <returns></returns>
-    public bool StraightLineOfSight(Vector2Int a, Vector2Int b)
-    {
-        // Make sure that they are in a straight line
-        if (!InStraightLine(a, b)) return false;
-
-        // Get the direction from a to b
-        Direction dir = GetDirectionTo(b, a);
-
-        // Get the distance between the two positions
-        int distance = GetDistance(a, b);
-
-        // Loop through all positions between a and b
-        Vector2Int checkPosition = a;
-        for (int i = 1; i < distance; i++)
-        {
-            // Get the position with the direction
-            Vector2Int pos = PositionWithDirection(checkPosition, dir);
-
-            // Check if the tile is free
-            if (!IsTileFree(pos))
-                return false;
-
-            // Set the position to check to the new position
-            checkPosition = pos;
-        }
-
-        // Finally, return true if there are no obstacles
-        return true;
-    }
-
-    /// <summary>
-    /// Determines if there are any obstacles between two positions diagonally
-    /// </summary>
-    /// <param name="a"></param>
-    /// <param name="b"></param>
-    /// <returns></returns>
-    public bool DiagonalLineOfSight(Vector2Int a, Vector2Int b)
-    {
-        Vector2Int dir = b - a;
-
-        // Check if the positions are in a diagonal line
-        if (Mathf.Abs(dir.x) != Mathf.Abs(dir.y))
-            return false;
-
-        // Check every diagonal tile between the two positions
-        Vector2Int checkPosition = a;
-        for (int i = 1; i < Mathf.Abs(dir.x); i++)
-        {
-            // Get the position with the direction
-            Vector2Int pos = PositionWithDirection(checkPosition, GetDirectionTo(b, a));
-
-            // Check if the tile is free
-            if (!IsTileFree(pos))
-                return false;
-
-            // Set the position to check to the new position
-            checkPosition = pos;
-        }
-
-        // Finally, return true if there are no obstacles
-        return true;
     }
 
     /// <summary>
