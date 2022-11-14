@@ -32,6 +32,7 @@ public abstract class Entity : Unit, IPushable
     // For enemies, this will be the max amount of tiles they can move.
     // For player, the cost for moving per tile.
     [SerializeField] protected int m_movementAmount;
+    [SerializeField] protected int m_physicalMovementSpeed;
 
     /// <summary>
     /// The health component of the entity

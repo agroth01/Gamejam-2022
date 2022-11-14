@@ -35,6 +35,18 @@ public class TurnQueue
     /// <param name="action">The action to add</param>
     public void AddAction(Unit unit, ICombatAction action)
     {
+        // Check if the unit already has an action in the queue.
+        // If it does, add the action to the list of actions.
+        // If it doesn't, create a new queue item and add it to the queue.
+        for (int i = 0; i < m_queue.Count; i++)
+        {
+            if (m_queue[i].Unit == unit)
+            {
+                m_queue[i].Actions.Add(action);
+                return;
+            }
+        }
+
         m_queue.Add(new TurnQueueItem(unit, action));
     }
 
@@ -47,7 +59,7 @@ public class TurnQueue
         // Loop through all actions in the queue and remove turn queue item with the same action.
         for (int i = 0; i < m_queue.Count; i++)
         {
-            if (m_queue[i].Action == action)
+            if (m_queue[i].Actions == action)
             {
                 m_queue.RemoveAt(i);
                 break;
@@ -55,15 +67,23 @@ public class TurnQueue
         }
     }
 
-    public TurnQueueItem GetNext()
+    public TurnQueueResult GetNext()
     {
-        // Get the first action in the queue
+        // Get the first item in the queue and remove it.
         TurnQueueItem item = m_queue[0];
 
-        // Remove the action from the queue
-        m_queue.RemoveAt(0);
+        // Extracts the action from the item and removes the item if there are no more
+        // actions.
+        TurnQueueResult result = new TurnQueueResult(item.Unit, item.Actions[0]);
+        if (item.Actions.Count == 1)
+        {
+            m_queue.RemoveAt(0);
+        }
+        else
+        {
+            item.Actions.RemoveAt(0);
+        }
 
-        // Return the action
-        return item;
+        return result;
     }
 }

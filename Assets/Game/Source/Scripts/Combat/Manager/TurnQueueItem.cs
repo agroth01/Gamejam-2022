@@ -13,11 +13,18 @@ using UnityEngine;
 public struct TurnQueueItem
 {
     public Unit Unit;
-    public ICombatAction Action;
+    public List<ICombatAction> Actions;
 
     public TurnQueueItem(Unit unit, ICombatAction action)
     {
+        Unit = unit;
+        Actions = new List<ICombatAction>();
+        Actions.Add(action);
+    }
+
+    public TurnQueueItem(Unit unit, List<ICombatAction> action)
+    {
         this.Unit = unit;
-        this.Action = action;
+        this.Actions = action;
     }
 }
