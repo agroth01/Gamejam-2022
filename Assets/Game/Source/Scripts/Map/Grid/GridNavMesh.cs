@@ -75,6 +75,22 @@ public class GridNavMesh
     }
 
     /// <summary>
+    /// Generates a new navmesh that purposely ignores the obstacles.
+    /// </summary>
+    /// <param name="ignoredTiles"></param>
+    public void BakeIgnored(List<Vector2Int> ignoredTiles)
+    {
+        List<Vector2Int> obstacles = GetObstaclePositions();
+        // remove ignored tiles from obstacles
+        foreach (Vector2Int ignoredTile in ignoredTiles)
+        {
+            obstacles.Remove(ignoredTile);
+        }
+        List<Vector2Int> additionalObstacles = new List<Vector2Int>();
+        InternalBake(obstacles, additionalObstacles);
+    }
+
+    /// <summary>
     /// Returns the node at the given x and y.
     /// Will return null if out of bounds.
     /// </summary>
@@ -154,7 +170,7 @@ public class GridNavMesh
 
     #region Private Methods
 
-    private void InternalBake(List<Vector3> obstaclePositions, List<Vector2Int> additionalObstacles)
+    private void InternalBake(List<Vector2Int> obstaclePositions, List<Vector2Int> additionalObstacles)
     {
         // First get the size of mesh to initialize node array.
         Vector2 navmeshSize = CalculateMeshSize();
@@ -175,11 +191,9 @@ public class GridNavMesh
 
         // Finally, we go through all the obstacles and mark the nodes as unwalkable.
         // Since this is comparing world position against grid position, we need to apply offset based on size.
-        foreach (Vector3 obstaclePosition in obstaclePositions)
+        foreach (Vector2Int obstaclePosition in obstaclePositions)
         {
-            int x = (int)obstaclePosition.x + m_xOffset;
-            int y = (int)obstaclePosition.z + m_yOffset;
-            m_nodes[x, y].IsObstructed = true;
+            m_nodes[obstaclePosition.x, obstaclePosition.y].IsObstructed = true;
         }
 
         // Real finally. Include additional obsticles. These should already be respecting the offset
@@ -239,16 +253,23 @@ public class GridNavMesh
         return size;
     }
 
-    private List<Vector3> GetObstaclePositions()
+    private List<Vector2Int> GetObstaclePositions()
     {
-        List<Vector3> obstaclePositions = new List<Vector3>();
+        // First get the size of mesh to initialize node array.
+        Vector2 navmeshSize = CalculateMeshSize();
+        m_size = navmeshSize;
+
+        List<Vector2Int> obstaclePositions = new List<Vector2Int>();
 
         // Loop through all obstacle holders and get the positions of all obstacles.
         foreach (Transform obstacleHolder in m_obstacleHolders)
         {
             foreach (Transform obstacle in obstacleHolder)
             {
-                obstaclePositions.Add(obstacle.position);
+
+                int x = (int)obstacle.position.x + m_xOffset;
+                int y = (int)obstacle.position.z + m_yOffset;
+                obstaclePositions.Add(new Vector2Int(x, y));
             }
         }
 

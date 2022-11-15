@@ -85,43 +85,50 @@ public abstract class Unit : MonoBehaviour, IDamagable
         IPushable pushable = GetComponent<IPushable>();
         if (pushable != null)
         {
-            // First we need to determine if all tiles along the push direction are empty.
-            // We count all tiles available from current location to where we will end up.
-            // If there are less tiles available, we move to the furthest tile not blocked,
-            // and deal damage based on the difference between the two.
-            int possibleDistance = 0;
-            Vector2Int checkPosition = Grid.Instance.GetGridPosition(transform.position);
-            Vector2Int finalPosition = checkPosition;
-            for (int i = 0; i < distance; i++)
+            StartCoroutine(PushCoroutine(direction, distance));
+        }
+    }
+
+    private IEnumerator PushCoroutine(Direction direction, int distance)
+    {
+        // First we need to determine if all tiles along the push direction are empty.
+        // We count all tiles available from current location to where we will end up.
+        // If there are less tiles available, we move to the furthest tile not blocked,
+        // and deal damage based on the difference between the two.
+        int possibleDistance = 0;
+        Vector2Int checkPosition = Grid.Instance.GetGridPosition(transform.position);
+        Vector2Int finalPosition = checkPosition;
+        for (int i = 0; i < distance; i++)
+        {
+            // Is the next tile unit would move to free?
+            Vector2Int next = Grid.Instance.PositionWithDirection(checkPosition, direction);
+            if (Grid.Instance.IsTileFree(next))
             {
-                // Is the next tile unit would move to free?
-                Vector2Int next = Grid.Instance.PositionWithDirection(checkPosition, direction);
-                if (Grid.Instance.IsTileFree(next))
-                {
-                    possibleDistance += 1;
-                    finalPosition = next;
+                possibleDistance += 1;
+                finalPosition = next;
 
-                    // We move the check distance even further
-                    checkPosition = next;
-                }
-            }
-
-            // We now have to get the path to the final position.
-            Vector2Int startPosition = Grid.Instance.GetGridPosition(transform.position);
-            List<Vector2Int> path = Grid.Instance.GetPath(startPosition, finalPosition);
-
-            // Then we move the unit along the path.
-            // TODO: Make the speed value not hardcoded. Not sure where to put it though...
-            MoveToSpot(path, 12 );
-
-            // Deal damage to the unit based on untraveled distance.
-            // TODO: Pass multiplier. Or other effects.
-            int damage = distance - possibleDistance;
-            if (damage > 0)
-            {
-                GetComponent<IDamagable>().TakeDamage(damage);
+                // We move the check distance even further
+                checkPosition = next;
             }
         }
+
+        // We now have to get the path to the final position.
+        Vector2Int startPosition = Grid.Instance.GetGridPosition(transform.position);
+        List<Vector2Int> path = Grid.Instance.GetPath(startPosition, finalPosition);
+
+        // Then we move the unit along the path.
+        // TODO: Make the speed value not hardcoded. Not sure where to put it though...
+        yield return MoveTo(path, 12);
+
+        // Deal damage to the unit based on untraveled distance.
+        // TODO: Pass multiplier. Or other effects.
+        int damage = distance - possibleDistance;
+        if (damage > 0)
+        {
+            GetComponent<IDamagable>().TakeDamage(damage);
+        }
+
+        OnPushed();
     }
 
     /// <summary>
@@ -130,20 +137,18 @@ public abstract class Unit : MonoBehaviour, IDamagable
     /// </summary>
     public virtual void OnFinishedMoving() { }
 
-    /// <summary>
-    /// Moves the entity to the desired position on the grid.
-    /// </summary>
-    /// <param name="targetPositions">Positions to move to.</param>
-    /// <param name="speed">Speed to move at</param>
-    public virtual void MoveToSpot(List<Vector2Int> targetPositions, float speed)
-    {
-        StartCoroutine(MoveTo(targetPositions, speed));
-    }
+    public virtual void OnPushed() { }
 
     public IEnumerator MoveTo(List<Vector2Int> targetPosition, float speed)
     {
         while (targetPosition.Count > 0)
         {
+            // Unit might die while moving. Check for that and stop if true
+            if (gameObject == null)
+            {
+                yield break;
+            }
+
             // Get the world position of the first target position.
             Vector3 worldPos = Grid.Instance.GetWorldPosition(targetPosition[0].x, targetPosition[0].y);
 
@@ -195,16 +200,46 @@ public abstract class Unit : MonoBehaviour, IDamagable
 
     public void AddStatusEffect(StatusEffect effect)
     {
-        Debug.Log(("Added status effect " + effect.ToString() + " to " + name));
+        // Check if we already have the status effect. If so, remove the current one,
+        // and apply a new one.
+        if (HasEffect(effect))
+        {
+            RemoveStatusEffect(effect);
+        }
+
         m_statusEffects.Add(effect);
         effect.OnEffectAdd(this);
     }
 
     public void RemoveStatusEffect(StatusEffect effect)
     {
-        Debug.Log(("Removed status effect " + effect.ToString() + " from " + name));
-        m_statusEffects.Remove(effect);
+        // Remove all status effects from list with same type
+        m_statusEffects.RemoveAll(x => x.GetType() == effect.GetType());
         effect.OnEffectRemoved(this);
+    }
+
+    public bool HasEffect(StatusEffect effect)
+    {
+        foreach (StatusEffect e in m_statusEffects)
+        {
+            if (e.GetType() == effect.GetType())
+                return true;
+        }
+
+        return false;
+    }
+
+    public StatusEffect GetStatusEffect<T>()
+    {
+        foreach (StatusEffect effect in m_statusEffects)
+        {
+            if (effect is T)
+            {
+                return effect;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

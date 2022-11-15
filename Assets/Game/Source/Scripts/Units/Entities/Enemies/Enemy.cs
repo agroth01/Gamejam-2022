@@ -17,13 +17,21 @@ public abstract class Enemy : Entity, IPushable
     [SerializeField] private string m_displayName;
     [SerializeField] private int m_actionPriority;
 
-    [Header("Highlights")]
-    [SerializeField] private Color m_damageHighlightColor;
-    [SerializeField] private Color m_moveHighlightColor;
+    [Header("Lines")]
+    [SerializeField] private List<ActionLine> m_lines;
+    
     private List<GameObject> m_highlights;
 
     // Track the intended action, for automatic removal upon death
     private ICombatAction m_intendedAction;
+
+    // Current line based on action
+    private ActionLine m_currentLine;
+
+    public ICombatAction IntendedAction
+    {
+        get { return m_intendedAction; }
+    }
 
     public int Priority
     {
@@ -38,6 +46,23 @@ public abstract class Enemy : Entity, IPushable
 
     public override void TakeDamage(int damage)
     {
+        // If the enemy has the protected status effect, redirect damage to the protector instead.
+        ProtectedStatusEffect protect = (ProtectedStatusEffect)GetStatusEffect<ProtectedStatusEffect>();
+        if (protect != null)
+        {
+            // Make sure protector isn't dead.
+            if (protect.Protector == null)
+            {
+                RemoveStatusEffect(protect);
+            }
+            
+            else
+            {
+                protect.Protector.TakeDamage(damage);
+                return;
+            }           
+        }
+
         m_health.Damage(damage);
     }
 
@@ -70,11 +95,6 @@ public abstract class Enemy : Entity, IPushable
         // Add it to the queue for when it's enemies turn to attack.
         BattleManager.Instance.AddActionToQueue(this, action, m_actionPriority);
         m_intendedAction = action;
-
-        // Set up highlights for the action
-        ClearHighlights();
-        m_highlights = CreateHighlights(action);
-        HideHighlights();
     }
 
     /// <summary>
@@ -86,6 +106,15 @@ public abstract class Enemy : Entity, IPushable
         BattleManager.Instance.RemoveActionFromQueue(action);
         ClearHighlights();
     }
+
+    /// <summary>
+    /// Removes the current intended action
+    /// </summary>
+    public void ClearAction()
+    {
+        BattleManager.Instance.RemoveActionFromQueue(m_intendedAction);
+        ClearHighlights();
+    }
     
     /// <summary>
     /// Method that will be called when the enemy dies. When overriding, it is important
@@ -95,7 +124,7 @@ public abstract class Enemy : Entity, IPushable
     {
         // Note that we do not need to clear the highlights here when the enemy dies,
         // because it is handled when removing action.
-        RemoveAction(m_intendedAction);
+        ClearAction();
         RemoveUnit();
     }
 
@@ -135,9 +164,7 @@ public abstract class Enemy : Entity, IPushable
                     return false;
             }
         }
-
-
-        
+      
         return true;
     }
 
@@ -151,44 +178,34 @@ public abstract class Enemy : Entity, IPushable
     /// </summary>
     /// <param name="action"></param>
     /// <returns></returns>
-    private List<GameObject> CreateHighlights(ICombatAction action)
+    public void CreateHighlight(List<Vector2Int> positions, Color color)
     {
-        List<GameObject> highlights = new List<GameObject>();
+        if (m_highlights == null) m_highlights = new List<GameObject>();
 
-        // Single target damage
-        if (action is SingleDamageAction)
+        foreach (Vector2Int position in positions)
         {
-            SingleDamageAction singleDamageAction = (SingleDamageAction)action;
-            highlights.Add(Grid.Instance.HighlightTile(singleDamageAction.TargetPosition, m_damageHighlightColor));
+            GameObject highlight = Grid.Instance.HighlightTile(position, color);
+            highlight.SetActive(false);
+            m_highlights.Add(highlight);
         }
+    }
 
-        // Area Damage Action
-        if (action is AreaDamageAction)
-        {
-            AreaDamageAction areaDamageAction = (AreaDamageAction)action;
-            foreach (SingleDamageAction sda in areaDamageAction.Actions)
-            {
-                highlights.Add(Grid.Instance.HighlightTile(sda.TargetPosition, m_damageHighlightColor));
-            }
-        }
-
-        //// Normal move
-        //if (action is MoveAction)
-        //{
-        //    MoveAction moveAction = (MoveAction)action;
-        //    foreach (Vector2Int position in moveAction.Destinations)
-        //    {
-        //        highlights.Add(Grid.Instance.HighlightTile(position, m_moveHighlightColor));
-        //    }
-        //}
-
-        return highlights;
+    /// <summary>
+    /// Creates highlights based on the type of action is performed
+    /// </summary>
+    /// <param name="action"></param>
+    /// <returns></returns>
+    public void CreateHighlight(Vector2Int position, Color color)
+    {
+        if (m_highlights == null) m_highlights = new List<GameObject>();
+        GameObject highlight = Grid.Instance.HighlightTile(position, color);
+        m_highlights.Add(highlight);
     }
 
     /// <summary>
     /// Destroys all highlight objects
     /// </summary>
-    private void ClearHighlights()
+    public void ClearHighlights()
     {
         if (m_highlights == null) return;
 
@@ -219,6 +236,66 @@ public abstract class Enemy : Entity, IPushable
         {
             highlight.SetActive(true);
         }
+    }
+
+    #endregion
+
+    #region Lines
+
+    /// <summary>
+    /// Returns the current line in a format for text mesh pro.
+    /// </summary>
+    /// <returns></returns>
+    public string GetLine()
+    {
+        return TextMeshProConvert(m_currentLine.Line);
+    }
+
+    /// <summary>
+    /// Converts the input string's color tags to be compatible with rich text function of text mesh pro.
+    /// </summary>
+    /// <param name="raw">The raw string data.</param>
+    /// <returns></returns>
+    private string TextMeshProConvert(string raw)
+    {
+        // Look through the raw string and extract all words that are surrounded by the characters []
+        // and replace them with the appropriate color tag.
+        string converted = raw;
+        string[] words = raw.Split(' ');
+        foreach (string word in words)
+        {
+            if (word.StartsWith("[") && word.EndsWith("]"))
+            {
+                // Check if it is a start or stop by seeing if there is a slash in the word
+                if (word.Contains("/"))
+                {
+                    converted = converted.Replace(word, "</color>");
+                }
+                else
+                {
+                    string color = word.Substring(1, word.Length - 2);
+                    converted = converted.Replace(word, $"<color=#{color}>");
+                }
+            }
+        }
+
+        return converted;
+    }
+
+    /// <summary>
+    /// Returns a random action line from the list of lines with the matching
+    /// tag/
+    /// </summary>
+    /// <param name="tag">The tag to search for.</param>
+    /// <returns></returns>
+    private ActionLine GetLineWithTag(string tag)
+    {
+        // Pick a random ActionLine from list with the matching tag
+        List<ActionLine> lines = m_lines.FindAll(x => x.Tag == tag);
+        if (lines.Count == 0)
+            return null;
+
+        return lines[Random.Range(0, lines.Count)];
     }
 
     #endregion

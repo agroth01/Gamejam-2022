@@ -205,7 +205,7 @@ public class BattleManager : MonoBehaviour
         // later in this coroutine.
         while (m_turnQueue.Count > 0)
         {
-            TurnQueueItem next = m_turnQueue.GetNext();
+            TurnQueueResult next = m_turnQueue.GetNext();
 
             // Key of next is the sender, so we can get the unit from there. We also
             // have to make sure that the enemy is still alive.
