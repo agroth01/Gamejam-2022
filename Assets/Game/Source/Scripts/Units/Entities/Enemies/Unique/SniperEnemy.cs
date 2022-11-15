@@ -22,11 +22,22 @@ public class SniperEnemy : Enemy
     {
         // Ignore unless within range
         if (Grid.Instance.GetDistanceBetweenUnits(this, GetPlayer()) > m_maxRange)
+        {
+            Debug.Log("Player out of range");
             return;
+        }
 
         // Make sure there is line of sight to the player.
         if (!LineOfSightToPlayer())
+        {
+            Debug.Log("No line of sight to player");
             return;
+        }
+
+        Debug.Log("Sniping player");
+        // Create the action
+        ICombatAction targetedShot = new TargetedShotAction(this, m_damage);
+        SetAction(targetedShot);
     }
 
     public override void DetermineMove()
