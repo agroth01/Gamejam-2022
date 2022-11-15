@@ -22,6 +22,7 @@ public class DestroyerEnemy : Enemy
 
     [Header("Iron Fist")]
     public int m_fistDamage;
+    private bool m_fistQueued;
 
     [Header("Toxic Grenade")]
     public int m_grenadeRange;
@@ -37,10 +38,10 @@ public class DestroyerEnemy : Enemy
         // If the player is 1 tile away, a normal melee attack will be performed instead.
         // Else, ranged attack will be performed.
         Vector2Int playerPosition = GetPlayer().GridPosition;
-        int playerDistance = Grid.Instance.GetDistance(GridPosition, playerPosition);
+        int playerDistance = Grid.Instance.GetDistanceBetweenUnits(this, GetPlayer());
 
-        Debug.Log(playerDistance <= m_chargeRange);
-        if (playerDistance <= m_chargeRange && !Grid.Instance.IsAdjacent(GridPosition, playerPosition) && Grid.Instance.InStraightLine(GridPosition, playerPosition))
+        if (playerDistance <= m_chargeRange && !Grid.Instance.IsAdjacent(GridPosition, playerPosition) 
+            && Grid.Instance.InStraightLine(GridPosition, playerPosition))
             Charge();
 
         else if (Grid.Instance.IsAdjacent(GridPosition, playerPosition))
@@ -59,23 +60,31 @@ public class DestroyerEnemy : Enemy
         // If we have to stop, determine what we hit and deal damage to the tile stopping enemy.
         Vector2Int playerPosition = GetPlayer().GridPosition;
 
-        // Get all tiles in a straight line between enemy and player and highlight them
-        List<Vector2Int> tiles = Grid.Instance.GetTilesBetween(playerPosition, GridPosition);
-        tiles.Add(playerPosition);
-        CreateHighlight(tiles, Color.red);
+        //// Get all tiles in a straight line between enemy and player and highlight them
+        //List<Vector2Int> tiles = Grid.Instance.GetTilesBetween(playerPosition, GridPosition);
+        ////tiles.Add(playerPosition);
+        //CreateHighlight(tiles, Color.red);
 
-        ICombatAction charge = new ChargeAction(this, playerPosition, m_chargeRange, m_chargeDamage, m_chargeKnockback, m_chargeSpeed);
+        // Determine the direction to the player
+        Direction direction = Grid.Instance.GetDirectionTo(playerPosition, GridPosition);
+
+        // Find the tile that enemy will end up on after moving charge distance
+        Vector2Int endPosition = Grid.Instance.GetTileInDirection(GridPosition, direction, m_chargeRange);
+        CreateHighlight(Grid.Instance.GetTilesBetween(GridPosition, endPosition), Color.red);
+
+        ICombatAction charge = new ChargeAction(this, endPosition, m_chargeDamage, m_chargeKnockback, m_chargeSpeed);
         SetAction(charge);
     }
 
     private void Fist()
     {
         // Performs melee attack where player currently is.
-        Vector2Int playerPosition = GetPlayer().GridPosition;
+        Direction direction = Grid.Instance.GetDirectionTo(GetPlayer().GridPosition, GridPosition);
+        Vector2Int attackPosition = Grid.Instance.PositionWithDirection(GridPosition, direction);
 
-        CreateHighlight(playerPosition, Color.red);
+        CreateHighlight(attackPosition, Color.red);
 
-        ICombatAction damage = new SingleDamageAction(playerPosition, m_fistDamage);
+        ICombatAction damage = new SingleDamageAction(attackPosition, m_fistDamage);
         SetAction(damage);
     }
 
@@ -127,5 +136,34 @@ public class DestroyerEnemy : Enemy
         // Perform the move
         ICombatAction move = new MoveAction(this, path, m_physicalMovementSpeed);
         SetAction(move);
+    }
+
+    public override void OnFinishedMoving()
+    {
+        
+    }
+
+    public override void OnPushed()
+    {
+        if (IntendedAction == null) return;
+
+        // Store the type of action intended, as we will make a new of same type later.
+        ICombatAction action = IntendedAction;
+        ClearAction();
+
+        if (action.GetType() == typeof(ChargeAction))
+        {
+            Charge();
+        }
+
+        else if (action.GetType() == typeof(SingleDamageAction))
+        {
+            Fist();
+        }
+
+        else if (action.GetType() == typeof(CreateHazardAction))
+        {
+            Grenade();
+        }
     }
 }

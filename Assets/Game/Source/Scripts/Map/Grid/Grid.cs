@@ -335,6 +335,14 @@ public class Grid : MonoBehaviour
         return path.Count;
     }
 
+    public int GetDistanceBetweenUnits(Unit unit1, Unit unit2)
+    {
+        m_navmesh.BakeIgnored(new List<Vector2Int> { unit1.GridPosition, unit2.GridPosition });
+        int distance = GetDistance(unit1.GridPosition, unit2.GridPosition);
+        BakeNavMesh();
+        return distance;
+    }
+
     /// <summary>
     /// Checks if there are anything on the tile like a wall or unit. Returns true if not.
     /// </summary>
@@ -347,6 +355,26 @@ public class Grid : MonoBehaviour
         if (node != null)
             return !node.IsObstructed;
         else return false;
+    }
+
+    /// <summary>
+    /// Gets the tile in the given direction with the specified amount of distance.
+    /// Will stop if the tile is out of bounds.
+    /// </summary>
+    /// <param name="position"></param>
+    /// <param name="direction"></param>
+    /// <param name="distance"></param>
+    /// <returns></returns>
+    public Vector2Int GetTileInDirection(Vector2Int position, Direction direction, int distance)
+    {
+        Vector2Int current = PositionWithDirection(position, direction);
+        for (int i = 0; i < distance; i++)
+        {
+            current = PositionWithDirection(current, direction);
+            if (!IsInBounds(current))
+                return current;
+        }
+        return current;
     }
 
     /// <summary>

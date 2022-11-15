@@ -18776,7 +18776,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1370041480}
   - component: {fileID: 1370041481}
-  - component: {fileID: 1370041482}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -18831,20 +18830,6 @@ MonoBehaviour:
   m_blinkDistance: 3
   m_blinkDamage: 1
   m_blinkWindupDelay: 0
---- !u!136 &1370041482
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1370041479}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.3
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!1 &1372326276
 GameObject:
   m_ObjectHideFlags: 0
@@ -22565,6 +22550,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1672423218}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1679493783 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+  m_PrefabInstance: {fileID: 2098231638}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1686974093
 GameObject:
   m_ObjectHideFlags: 0
@@ -28190,6 +28180,7 @@ Transform:
   m_Children:
   - {fileID: 1370041480}
   - {fileID: 581235337327169607}
+  - {fileID: 1679493783}
   m_Father: {fileID: 1225233203}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -29163,6 +29154,77 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2090662865}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1001 &2098231638
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 2
+    m_TransformParent: {fileID: 2035028349}
+    m_Modifications:
+    - target: {fileID: 3685941346540816198, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_actionPriority
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816198, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_movementAmount
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816198, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_startingHealth
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816200, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_Name
+      value: Destroyer
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_RootOrder
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -12
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816201, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_AddedGameObjects: []
+  m_SourcePrefab: {fileID: 100100000, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
 --- !u!1 &2138661699
 GameObject:
   m_ObjectHideFlags: 0
@@ -29803,7 +29865,7 @@ GameObject:
   - component: {fileID: 581235337327169601}
   - component: {fileID: 581235337327169608}
   m_Layer: 0
-  m_Name: Destroyer
+  m_Name: Guardian
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29817,7 +29879,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 581235337327169606}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7, y: 1, z: -11}
+  m_LocalPosition: {x: 12, y: 1, z: -11}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -29834,24 +29896,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 581235337327169606}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16f167fb9a384794f8c3b3160bbe2445, type: 3}
+  m_Script: {fileID: 11500000, guid: be31debd08dcec84f967ec1a3fe83007, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_maxHealth: 3
-  m_startingHealth: 3
-  m_movementAmount: 4
-  m_physicalMovementSpeed: 0
+  m_maxHealth: 5
+  m_startingHealth: 5
+  m_movementAmount: 7
+  m_physicalMovementSpeed: 5
   m_displayName: 
-  m_actionPriority: 0
+  m_actionPriority: 2
   m_lines: []
-  m_damageHighlightColor: {r: 1, g: 0, b: 0, a: 0.654902}
-  m_moveHighlightColor: {r: 0, g: 0, b: 0, a: 0}
-  m_chargeRange: 0
-  m_chargeDamage: 0
-  m_chargeSpeed: 0
-  m_fistDamage: 0
-  m_grenadeRange: 0
-  m_grenadeRadius: 0
+  m_protectionDuration: 3
+  m_meleeDamage: 0
 --- !u!1 &602476447761094182
 GameObject:
   m_ObjectHideFlags: 0

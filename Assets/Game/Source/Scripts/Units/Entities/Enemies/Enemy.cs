@@ -19,10 +19,7 @@ public abstract class Enemy : Entity, IPushable
 
     [Header("Lines")]
     [SerializeField] private List<ActionLine> m_lines;
-
-    [Header("Highlights")]
-    [SerializeField] private Color m_damageHighlightColor;
-    [SerializeField] private Color m_moveHighlightColor;
+    
     private List<GameObject> m_highlights;
 
     // Track the intended action, for automatic removal upon death
@@ -30,6 +27,11 @@ public abstract class Enemy : Entity, IPushable
 
     // Current line based on action
     private ActionLine m_currentLine;
+
+    public ICombatAction IntendedAction
+    {
+        get { return m_intendedAction; }
+    }
 
     public int Priority
     {
@@ -44,6 +46,23 @@ public abstract class Enemy : Entity, IPushable
 
     public override void TakeDamage(int damage)
     {
+        // If the enemy has the protected status effect, redirect damage to the protector instead.
+        ProtectedStatusEffect protect = (ProtectedStatusEffect)GetStatusEffect<ProtectedStatusEffect>();
+        if (protect != null)
+        {
+            // Make sure protector isn't dead.
+            if (protect.Protector == null)
+            {
+                RemoveStatusEffect(protect);
+            }
+            
+            else
+            {
+                protect.Protector.TakeDamage(damage);
+                return;
+            }           
+        }
+
         m_health.Damage(damage);
     }
 
@@ -87,6 +106,15 @@ public abstract class Enemy : Entity, IPushable
         BattleManager.Instance.RemoveActionFromQueue(action);
         ClearHighlights();
     }
+
+    /// <summary>
+    /// Removes the current intended action
+    /// </summary>
+    public void ClearAction()
+    {
+        BattleManager.Instance.RemoveActionFromQueue(m_intendedAction);
+        ClearHighlights();
+    }
     
     /// <summary>
     /// Method that will be called when the enemy dies. When overriding, it is important
@@ -96,7 +124,7 @@ public abstract class Enemy : Entity, IPushable
     {
         // Note that we do not need to clear the highlights here when the enemy dies,
         // because it is handled when removing action.
-        RemoveAction(m_intendedAction);
+        ClearAction();
         RemoveUnit();
     }
 

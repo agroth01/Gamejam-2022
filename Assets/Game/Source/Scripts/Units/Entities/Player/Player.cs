@@ -358,6 +358,8 @@ public class Player : Entity, IDamagable
     /// <returns></returns>
     private IEnumerator BlinkSelection(Dictionary<Direction, Vector2Int> blinkPositions)
     {
+        Debug.Log(blinkPositions.Values.Count);
+
         // Start by creating green highlights at all valid blink positions.
         List<GameObject> highlights = new List<GameObject>();        
         foreach (Vector2Int pos in blinkPositions.Values)
@@ -365,6 +367,7 @@ public class Player : Entity, IDamagable
             // Cache the highlight for easy removal later
             GameObject highlight = Grid.Instance.HighlightTile(pos, Color.green);
             highlights.Add(highlight);
+            highlight.SetActive(true);
         }
 
         // While loop will only listen for escape input. The only other escape from while loop
