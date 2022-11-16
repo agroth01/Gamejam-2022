@@ -43,6 +43,9 @@ public class Player : Entity, IDamagable
     // AP
     private ActionPoints m_actionPoints;
 
+    // Preview
+    private PlayerPositionPreview m_preview;
+
     public ActionPoints ActionPoints
     {
         get { return m_actionPoints; }
@@ -60,6 +63,7 @@ public class Player : Entity, IDamagable
     {
         base.Awake();
         InitializeActionPoints();
+        m_preview = GetComponentInChildren<PlayerPositionPreview>();
     }
 
     public override void TakeDamage(int damage)
@@ -138,6 +142,13 @@ public class Player : Entity, IDamagable
                 isValid = true;
 
                 distance = currentPath.Count;
+
+                // Show the preview
+                if (currentPath.Count > 0)
+                {
+                    Vector3 previewPos = Grid.Instance.GetWorldPosition(currentPath[currentPath.Count - 1].x, currentPath[currentPath.Count - 1].y);
+                    m_preview.Show(previewPos);
+                }
             }
 
             // No valid path found.
@@ -146,6 +157,7 @@ public class Player : Entity, IDamagable
                 lineRenderer.startColor = Color.red;
                 lineRenderer.endColor = Color.red;
                 isValid = false;
+                m_preview.Hide();
             }
 
             yield return 0;
@@ -159,6 +171,7 @@ public class Player : Entity, IDamagable
 
             // Clean up linerenderer after
             Destroy(lineRenderer.gameObject);
+            m_preview.Hide();
 
             ICombatAction moveAction = new MoveAction(this, currentPath, m_moveSpeed);
             yield return moveAction.Execute();
