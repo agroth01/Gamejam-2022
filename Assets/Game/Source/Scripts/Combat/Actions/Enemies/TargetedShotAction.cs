@@ -40,6 +40,7 @@ public class TargetedShotAction : ICombatAction
 
             if (!Grid.Instance.IsTileFree(tilesToPlayer[i]))
             {
+                // Hit an obstructed tile that is not a unit, so we just stop here.
                 break;
             }
         }

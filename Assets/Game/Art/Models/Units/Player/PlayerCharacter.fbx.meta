@@ -42,7 +42,22 @@ ModelImporter:
   - first:
       74: 5513987803196006550
     second: Player|Telekinesis_idle
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: player_accessory
+    second: {fileID: 2100000, guid: 586408e975f727145b4c3cdc22d0f23d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: player_base
+    second: {fileID: 2100000, guid: 0f68736ac17c91e47bbb685e6d4f0816, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: player_secondary
+    second: {fileID: 2100000, guid: b58832e0b1ea6db4c9fe334dafb8f921, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
