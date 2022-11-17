@@ -4053,7 +4053,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1153376247}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: BattleManager, Assembly-CSharp
         m_MethodName: EndPlayerTurn
         m_Mode: 1
@@ -15726,8 +15726,8 @@ Camera:
   m_GameObject: {fileID: 963194225}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -24888,7 +24888,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1627013134}
   - {fileID: 1153376246}
   m_Father: {fileID: 0}
   m_RootOrder: 1
@@ -26492,50 +26491,6 @@ Transform:
   m_Father: {fileID: 1117673754}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1627013133
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1627013134}
-  - component: {fileID: 1627013135}
-  m_Layer: 0
-  m_Name: CombatActionManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1627013134
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1627013133}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1503968629}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1627013135
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1627013133}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0776b64445f61b4439069e1603d45c82, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1630838974
 GameObject:
   m_ObjectHideFlags: 0
@@ -34969,7 +34924,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3685941346540816198, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
       propertyPath: m_lines.Array.size
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3685941346540816198, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
       propertyPath: m_lines.Array.data[0].Tag
@@ -34978,6 +34933,10 @@ PrefabInstance:
     - target: {fileID: 3685941346540816198, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
       propertyPath: m_lines.Array.data[1].Tag
       value: fist
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816198, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_lines.Array.data[2].Tag
+      value: grenade
       objectReference: {fileID: 0}
     - target: {fileID: 3685941346540816198, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
       propertyPath: m_lines.Array.data[0].Line
@@ -34989,6 +34948,12 @@ PrefabInstance:
       value: By clenching my fists so hard that the carbon molecules that makes up
         my skin turn into diamonds, I can punch for [red] {num} damage [/red] in
         front of me.
+      objectReference: {fileID: 0}
+    - target: {fileID: 3685941346540816198, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
+      propertyPath: m_lines.Array.data[2].Line
+      value: I might not be able to hit you, but don't think I give up that easily.
+        These [green] toxic grenades [/green] are so lethal, that just a single whiff
+        is enough to posion anyone. Make sure to take a deep breath.
       objectReference: {fileID: 0}
     - target: {fileID: 3685941346540816200, guid: 42da76a166ea4314a96f8e3d16b34421, type: 3}
       propertyPath: m_Name
