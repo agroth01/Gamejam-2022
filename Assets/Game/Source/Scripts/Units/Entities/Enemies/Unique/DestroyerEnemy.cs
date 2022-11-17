@@ -60,11 +60,6 @@ public class DestroyerEnemy : Enemy
         // If we have to stop, determine what we hit and deal damage to the tile stopping enemy.
         Vector2Int playerPosition = GetPlayer().GridPosition;
 
-        //// Get all tiles in a straight line between enemy and player and highlight them
-        //List<Vector2Int> tiles = Grid.Instance.GetTilesBetween(playerPosition, GridPosition);
-        ////tiles.Add(playerPosition);
-        //CreateHighlight(tiles, Color.red);
-
         // Determine the direction to the player
         Direction direction = Grid.Instance.GetDirectionTo(playerPosition, GridPosition);
 
@@ -74,6 +69,8 @@ public class DestroyerEnemy : Enemy
 
         ICombatAction charge = new ChargeAction(this, endPosition, m_chargeDamage, m_chargeKnockback, m_chargeSpeed);
         SetAction(charge);
+
+        SetLine("charge", m_chargeDamage);
     }
 
     private void Fist()
@@ -86,6 +83,8 @@ public class DestroyerEnemy : Enemy
 
         ICombatAction damage = new SingleDamageAction(attackPosition, m_fistDamage);
         SetAction(damage);
+
+        SetLine("fist", m_fistDamage);
     }
 
     private void Grenade()
@@ -98,6 +97,8 @@ public class DestroyerEnemy : Enemy
         // Now we have to create the hazard
         ICombatAction hazardCreation = new CreateHazardAction(targetTiles, m_grenadeHazardType, m_grenadeHazardDuration);
         SetAction(hazardCreation);
+
+        SetLine("grenade");
     }
 
     public override void DetermineMove()

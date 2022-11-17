@@ -473,10 +473,13 @@ public class Grid : MonoBehaviour
 
         int w = x2 - x;
         int h = y2 - y;
+        
         int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
         if (w < 0) dx1 = -1; else if (w > 0) dx1 = 1;
         if (h < 0) dy1 = -1; else if (h > 0) dy1 = 1;
         if (w < 0) dx2 = -1; else if (w > 0) dx2 = 1;
+
+        
         int longest = Math.Abs(w);
         int shortest = Math.Abs(h);
         if (!(longest > shortest))
@@ -490,6 +493,8 @@ public class Grid : MonoBehaviour
         for (int i = 0; i <= longest; i++)
         {
             points.Add(new Vector2Int(x, y));
+
+            bool l = (!(numerator < longest));
 
             numerator += shortest;
             if (!(numerator < longest))

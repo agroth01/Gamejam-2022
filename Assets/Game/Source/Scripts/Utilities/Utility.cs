@@ -9,9 +9,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public static class Utility
 {
+    /// <summary>
+    /// Loads the next scene in the build index.
+    /// </summary>
+    public static void LoadNextScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+    }
+
+    /// <summary>
+    /// Restarts the current scene.
+    /// </summary>
+    public static void RestartScene()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
     /// <summary>
     /// Delays the execution of a method by a given amount of time. The reason for using this over built in Invoke()
     /// is that this allows for passing methods directly, not as a string, and it accepts lambda expressions as well.

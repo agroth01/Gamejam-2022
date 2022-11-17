@@ -64,6 +64,9 @@ public class Player : Entity, IDamagable
         base.Awake();
         InitializeActionPoints();
         m_preview = GetComponentInChildren<PlayerPositionPreview>();
+
+
+        m_health.OnHealthZero += OnDeath;
     }
 
     public override void TakeDamage(int damage)
@@ -74,6 +77,12 @@ public class Player : Entity, IDamagable
     public void RestoreAP()
     {
         m_actionPoints.RestoreActionPoints();
+    }
+
+    private void OnDeath()
+    {
+        // Temporary solution to when player dies. Reloads the current scene.
+        this.Invoke(Utility.RestartScene, 3f);
     }
 
     #region Debugging

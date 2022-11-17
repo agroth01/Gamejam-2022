@@ -10,6 +10,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class BattleManager : MonoBehaviour
 {
@@ -27,6 +28,9 @@ public class BattleManager : MonoBehaviour
 
     // Track the player for easy access to methods and variables.
     private Player m_player;
+
+    // For displaying updates about the battle, we use the announcement text
+    private AnnouncementText m_announcement;
 
     // Events
     public Action OnBattleStart;
@@ -48,6 +52,7 @@ public class BattleManager : MonoBehaviour
         m_turnQueue.Initialize();
         m_state = BattleState.Player;
         m_turnQueueBuffer = new List<QueueBufferItem>();
+        m_announcement = GameObject.Find("Announcement").GetComponent<AnnouncementText>();
     }
 
     private void Start()
@@ -65,8 +70,10 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     public IEnumerator StartBattle()
     {
+        m_announcement.Announce("Game start", 3);
+
         // Just to make sure that everything is properly initialized and registered, we wait one frame.
-        yield return new WaitForSeconds(0.05f);
+        yield return new WaitForSeconds(3f);
 
         // Call event to signal that the battle has started.
         OnBattleStart?.Invoke();
@@ -111,8 +118,19 @@ public class BattleManager : MonoBehaviour
         // Call event then start new round.
         OnRoundEnd?.Invoke();
 
-        // Finally, start the new round
-        StartRound();
+        // Here we check for the win condition, which should just be if there are no more enemies.
+        // Might add some more logic here later.
+        if (GetEnemyCount() == 0)
+        {
+            // TEMPORARY: Load next scene. this should be changed later
+            m_announcement.Announce("Level complete", 3f);
+            this.Invoke(Utility.LoadNextScene, 3f);
+        }
+
+        else
+        {
+            StartRound();
+        }
     }
 
     #endregion
@@ -150,6 +168,8 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     public void StartPlayerTurn()
     {
+        m_announcement.Announce("Player turn", 3);
+
         // Call event to signal that the player turn has started.
         OnPlayerTurnStart?.Invoke();
 
@@ -184,6 +204,10 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     public void StartHostilesTurn()
     {
+        // Make sure there are any enemies left.
+        if (GetEnemyCount() == 0)
+            EndRound();
+
         // Call the event to signal that the hostiles turn has started.
         OnHostilesTurnStart?.Invoke();        
 
@@ -200,6 +224,9 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private IEnumerator PerformEnemyActionTurns()
     {
+        m_announcement.Announce("Enemy turn", 3);
+        yield return new WaitForSeconds(1);
+
         // Now it is time to perform all actions that is in the queue.
         // This will be any actions that is not moving, as that will happen
         // later in this coroutine.
@@ -215,6 +242,8 @@ public class BattleManager : MonoBehaviour
             // Retrieve the action and execute it.
             ICombatAction action = next.Action;
             yield return action.Execute();
+
+            yield return new WaitForSeconds(1);
         }
 
         // Since we now have determined if the enemy should move, we can now
@@ -285,4 +314,10 @@ public class BattleManager : MonoBehaviour
     }
 
     #endregion
+
+    private int GetEnemyCount()
+    {
+        return Grid.Instance.GetUnitsOfType<Enemy>().Count;
+    }
+
 }
