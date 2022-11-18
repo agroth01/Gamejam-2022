@@ -254,7 +254,6 @@ public class GridNavMesh
         foreach (Transform child in m_groundHolder)
         {
             m_groundPositions.Add(new Vector2Int((int)child.position.x + minX, (int)child.position.z + minY));
-            Debug.Log(new Vector2Int((int)child.position.x - minX, (int)child.position.z - minY));
         }
 
         // Now that we have the min and max values, we can calculate the size of the mesh.
