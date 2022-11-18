@@ -197,6 +197,7 @@ public class Player : Entity, IDamagable
         {
             // Clean up linerenderer after
             Destroy(lineRenderer.gameObject);
+            m_preview.Hide();
         }
     }
 
