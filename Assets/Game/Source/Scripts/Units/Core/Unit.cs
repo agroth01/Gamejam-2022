@@ -198,7 +198,7 @@ public abstract class Unit : MonoBehaviour, IDamagable
 
     #region Status effects
 
-    public void AddStatusEffect(StatusEffect effect)
+    public virtual void AddStatusEffect(StatusEffect effect)
     {
         // Check if we already have the status effect. If so, remove the current one,
         // and apply a new one.
