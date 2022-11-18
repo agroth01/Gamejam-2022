@@ -29,12 +29,14 @@ public class SniperEnemy : Enemy
         // Make sure there is line of sight to the player.
         if (!LineOfSightToPlayer())
         {
+            SetLine("no los");
             return;
         }
 
         // Create the action
         ICombatAction targetedShot = new TargetedShotAction(this, m_damage);
         SetAction(targetedShot);
+        SetLine("snipe", m_damage);
     }
 
     public override void DetermineMove()

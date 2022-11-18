@@ -28,6 +28,8 @@ public abstract class Enemy : Entity, IPushable
     // Current line based on action
     private ActionLine m_currentLine;
 
+    private EnemyDisplay m_display;
+
     public ICombatAction IntendedAction
     {
         get { return m_intendedAction; }
@@ -75,6 +77,13 @@ public abstract class Enemy : Entity, IPushable
 
     public void OnMouseEnter()
     {
+        if (m_display == null)
+        {
+            m_display = GameObject.Find("Enemy Display").GetComponent<EnemyDisplay>();
+        }
+        m_display.SetEnemy(this);
+        m_display.Show();
+
         if (m_highlights != null)
             ShowHighlights();
     }
@@ -83,6 +92,10 @@ public abstract class Enemy : Entity, IPushable
     {
         if (m_highlights != null)
             HideHighlights();
+
+        // It is impossible to trigger this event without first calling OnMouseEnter, so we
+        // don't need to check if m_display is null.
+        m_display.Hide();
     }
 
 
@@ -243,12 +256,38 @@ public abstract class Enemy : Entity, IPushable
     #region Lines
 
     /// <summary>
+    /// Picks a random line with the corresponding tag at replaces the variable in the line
+    /// with the number.
+    /// </summary>
+    /// <param name="tag"></param>
+    /// <param name="number"></param>
+    public void SetLine(string tag, int number)
+    {
+        m_currentLine = GetLineWithTag(tag);
+        m_currentLine.SetVariable("num", number);
+    }
+
+    /// <summary>
+    /// Picks a random line with the corresponding tag.
+    /// </summary>
+    /// <param name="tag"></param>
+    public void SetLine(string tag)
+    {
+        m_currentLine = GetLineWithTag(tag);
+    }
+
+    /// <summary>
     /// Returns the current line in a format for text mesh pro.
     /// </summary>
     /// <returns></returns>
-    public string GetLine()
+    public string GetActionLine()
     {
         return TextMeshProConvert(m_currentLine.Line);
+    }
+
+    public bool HasLine()
+    {
+        return m_currentLine != null;
     }
 
     /// <summary>
@@ -274,7 +313,7 @@ public abstract class Enemy : Entity, IPushable
                 else
                 {
                     string color = word.Substring(1, word.Length - 2);
-                    converted = converted.Replace(word, $"<color=#{color}>");
+                    converted = converted.Replace(word, $"<color={color}>");
                 }
             }
         }
