@@ -26,6 +26,7 @@ public class GridNavMesh
     // References to the gameobjects that will be used to generate the navmesh.
     private Transform m_groundHolder;
     private List<Transform> m_obstacleHolders;
+    private HashSet<Vector2Int> m_groundPositions;
 
     public GridNavMesh(Transform groundHolder, List<Transform> obstacleHolders, bool bakeMesh = false)
     {
@@ -179,13 +180,16 @@ public class GridNavMesh
         // We then initialize the node array with size calculated.
         // To start with, all nodes are walkable.
         m_nodes = new Node[(int)navmeshSize.x, (int)navmeshSize.y];
+        
         for (int x = 0; x < navmeshSize.x; x++)
         {
             for (int y = 0; y < navmeshSize.y; y++)
             {
                 Vector2Int gridPosition = new Vector2Int(x, y);
                 Vector3 worldPosition = new Vector3(x - m_xOffset, 1, y - m_yOffset);
-                m_nodes[x, y] = new Node(gridPosition, worldPosition, false);
+
+                bool obstructed = !m_groundPositions.Contains(gridPosition);
+                m_nodes[x, y] = new Node(gridPosition, worldPosition, obstructed);
             }
         }
 
@@ -210,6 +214,7 @@ public class GridNavMesh
     private Vector2 CalculateMeshSize()
     {
         Vector2 size = Vector2.zero;
+        m_groundPositions = new HashSet<Vector2Int>();
 
         int minX = 0;
         int maxX = 0;
@@ -237,11 +242,20 @@ public class GridNavMesh
             {
                 maxY = (int)child.position.z;
             }
+
+            
         }
 
         // Cahce the minimum values for offset usage later
         m_xOffset = minX;
         m_yOffset = minY;
+
+        // Loop through ground holders again and store positions with offset
+        foreach (Transform child in m_groundHolder)
+        {
+            m_groundPositions.Add(new Vector2Int((int)child.position.x + minX, (int)child.position.z + minY));
+            Debug.Log(new Vector2Int((int)child.position.x - minX, (int)child.position.z - minY));
+        }
 
         // Now that we have the min and max values, we can calculate the size of the mesh.
         size.x = minX + maxX + 1;
