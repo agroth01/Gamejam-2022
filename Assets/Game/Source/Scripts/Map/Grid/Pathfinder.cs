@@ -13,12 +13,12 @@ using UnityEngine;
 public class Pathfinder
 {
     // The navmesh that will be used by pathfinding.
-    private GridNavMesh m_navmesh;
+    private NewGridNavMesh m_navmesh;
 
     /// <summary>
     /// Create a new pathfinder object.
     /// </summary>
-    public Pathfinder(GridNavMesh navmesh)
+    public Pathfinder(NewGridNavMesh navmesh)
     {
         m_navmesh = navmesh;
     }

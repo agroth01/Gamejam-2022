@@ -21,7 +21,7 @@ public class Grid : MonoBehaviour
     public List<Transform> ObstacleHolders;
 
     // Navmesh for pathfinder and accessing nodes.
-    private GridNavMesh m_navmesh;
+    private NewGridNavMesh m_navmesh;
     
     // Pathfinder object used for navigation on the grid.
     private Pathfinder m_pathfinder;
@@ -46,7 +46,7 @@ public class Grid : MonoBehaviour
         }
 
         // Initialize navigation
-        m_navmesh = new GridNavMesh(GroundHolder, ObstacleHolders, true);
+        m_navmesh = new NewGridNavMesh(GroundHolder, ObstacleHolders, true);
         m_pathfinder = new Pathfinder(m_navmesh);
 
         // Registy
@@ -291,6 +291,11 @@ public class Grid : MonoBehaviour
         List<Vector2Int> path = Node.ConvertToPositions(pathNodes);
 
         return path;
+    }
+
+    public bool IsReachable(Vector2Int from, Vector2Int to)
+    {
+        return GetPath(from, to) != null;
     }
 
     /// <summary>

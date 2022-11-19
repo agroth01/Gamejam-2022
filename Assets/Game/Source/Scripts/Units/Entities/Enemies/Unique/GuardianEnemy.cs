@@ -63,6 +63,8 @@ public class GuardianEnemy : Enemy
 
     public override void DetermineMove()
     {
+        Debug.Log(gameObject.name + " moves");
+
         // Checks if there are any enemies in walking distance. Move towards them if so.
         // If we had a large amount of enemies in the game, this way of getting all nearby enemies
         // would not be optimal, but since we aren't going to have that many, getting all enemies
@@ -121,14 +123,18 @@ public class GuardianEnemy : Enemy
             return GridPosition;
 
         List<Vector2Int> adjacentPositions = Grid.Instance.GetFreeAdjacentTiles(position);
-        Vector2Int targetPosition = adjacentPositions[0];
-        foreach (Vector2Int adjacentPos in adjacentPositions)
+        Vector2Int targetPosition = new Vector2Int(1000, 1000);
+        foreach (Vector2Int potentialPosition in adjacentPositions)
         {
+            int distance = Grid.Instance.GetDistance(GridPosition, potentialPosition);
+            if (distance != 0)
+            {
+                if (targetPosition == new Vector2Int(1000, 1000))
+                    targetPosition = potentialPosition;
 
-            // Compare if the distance between this position and target position, if this position is shorted,
-            // we make that the target position.
-            if (Grid.Instance.GetDistance(targetPosition, GridPosition) > Grid.Instance.GetDistance(adjacentPos, GridPosition))
-                targetPosition = adjacentPos;
+                else if (distance < Grid.Instance.GetDistance(GridPosition, targetPosition))
+                    targetPosition = potentialPosition;
+            }
         }
         return targetPosition;
     }
@@ -138,6 +144,7 @@ public class GuardianEnemy : Enemy
             return;
 
         List<Vector2Int> path = Grid.Instance.GetPath(GridPosition, pos);
+        if (path == null) return;
 
         // Remove all points in path that is outside of movement range of enemy.
         if (path.Count > MovementSpeed)

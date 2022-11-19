@@ -35,6 +35,11 @@ public class GridNavMesh
         if (bakeMesh) Bake();
     }
 
+    public Node[,] Nodes
+    {
+        get { return m_nodes; }
+    }
+
     /// <summary>
     /// The width of the navmesh
     /// </summary>
@@ -58,6 +63,7 @@ public class GridNavMesh
     /// </summary>
     public void Bake()
     {
+        Debug.Log("owo3");
         // We include an empty list of the additional to make new system happy.
         List<Vector2Int> additionalObstacles = new List<Vector2Int>();
         InternalBake(GetObstaclePositions(), additionalObstacles);
@@ -72,6 +78,7 @@ public class GridNavMesh
     /// <param name="additionalObsticles"></param>
     public void Bake(List<Vector2Int> additionalObsticles)
     {
+        Debug.Log("owo2");
         InternalBake(GetObstaclePositions(), additionalObsticles);
     }
 
@@ -81,6 +88,7 @@ public class GridNavMesh
     /// <param name="ignoredTiles"></param>
     public void BakeIgnored(List<Vector2Int> ignoredTiles)
     {
+        Debug.Log("owo");
         List<Vector2Int> obstacles = GetObstaclePositions();
         // remove ignored tiles from obstacles
         foreach (Vector2Int ignoredTile in ignoredTiles)
@@ -174,12 +182,13 @@ public class GridNavMesh
     private void InternalBake(List<Vector2Int> obstaclePositions, List<Vector2Int> additionalObstacles)
     {
         // First get the size of mesh to initialize node array.
-        Vector2 navmeshSize = CalculateMeshSize();
-        m_size = navmeshSize;
+        //Vector2 navmeshSize = CalculateMeshSize();
+        Vector2 navmeshSize = m_size;
 
         // We then initialize the node array with size calculated.
         // To start with, all nodes are walkable.
-        m_nodes = new Node[(int)navmeshSize.x, (int)navmeshSize.y];
+        m_nodes = new Node[(int)navmeshSize.x + 1, (int)navmeshSize.y];
+
         
         for (int x = 0; x < navmeshSize.x; x++)
         {
@@ -197,8 +206,11 @@ public class GridNavMesh
         // Since this is comparing world position against grid position, we need to apply offset based on size.
         foreach (Vector2Int obstaclePosition in obstaclePositions)
         {
+            Debug.Log(obstaclePosition);
             m_nodes[obstaclePosition.x, obstaclePosition.y].IsObstructed = true;
         }
+
+        Debug.Log("b");
 
         // Real finally. Include additional obsticles. These should already be respecting the offset
         // so we will set the nodes directly without worrying about the offset.
@@ -206,6 +218,8 @@ public class GridNavMesh
         {
             m_nodes[additionalPosition.x, additionalPosition.y].IsObstructed = true;
         }
+
+        Debug.Log("c");
     }
 
     /// <summary>
@@ -241,9 +255,7 @@ public class GridNavMesh
             else if (child.position.z > maxY)
             {
                 maxY = (int)child.position.z;
-            }
-
-            
+            }          
         }
 
         // Cahce the minimum values for offset usage later
@@ -254,7 +266,6 @@ public class GridNavMesh
         foreach (Transform child in m_groundHolder)
         {
             m_groundPositions.Add(new Vector2Int((int)child.position.x + minX, (int)child.position.z + minY));
-            Debug.Log(new Vector2Int((int)child.position.x - minX, (int)child.position.z - minY));
         }
 
         // Now that we have the min and max values, we can calculate the size of the mesh.

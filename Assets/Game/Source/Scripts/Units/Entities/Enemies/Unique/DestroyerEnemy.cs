@@ -103,6 +103,8 @@ public class DestroyerEnemy : Enemy
 
     public override void DetermineMove()
     {
+        Debug.Log(gameObject.name + " moves");
+
         // Ignore if we are already next to the player
         if (Grid.Instance.IsAdjacent(GridPosition, GetPlayer().GridPosition))
             return;
@@ -114,19 +116,28 @@ public class DestroyerEnemy : Enemy
         if (adjacentPositions.Count == 0)
             return;
 
+
         // Go through each adjacent tile to determine which one is the closest to enemy current position.
-        Vector2Int targetPosition = adjacentPositions[0];
+        // Target position is set to 1000 1000 since it will never get to that value naturally, so we can use
+        // it to check if it has been set.
+        Vector2Int targetPosition = new Vector2Int(1000, 1000);
         foreach (Vector2Int potentialPosition in adjacentPositions)
         {
-            // If the potential position is closer than the current target position, we set it as the new target position.
-            if (Grid.Instance.GetDistance(GridPosition, potentialPosition) < Grid.Instance.GetDistance(GridPosition, targetPosition))
+            int distance = Grid.Instance.GetDistance(GridPosition, potentialPosition);
+            if (distance != 0)
             {
-                targetPosition = potentialPosition;
+                if (targetPosition == new Vector2Int(1000, 1000))
+                    targetPosition = potentialPosition;
+
+                else if (distance < Grid.Instance.GetDistance(GridPosition, targetPosition))
+                    targetPosition = potentialPosition;
             }
         }
-
+        
         // Move to the closest position
         List<Vector2Int> path = Grid.Instance.GetPath(GridPosition, targetPosition);
+        
+        if (path == null) return;
 
         // Remove all points in path that is outside of movement range of enemy.
         if (path.Count > MovementSpeed)
