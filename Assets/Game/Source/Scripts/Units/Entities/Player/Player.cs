@@ -28,23 +28,29 @@ public class Player : Entity, IDamagable
     [SerializeField] private int m_meleeCost;
     [SerializeField] private int m_meleeRange;
     [SerializeField] private int m_meleeDamage;
+    [SerializeField] private AudioClip m_meleeAudio;
 
     [Header("Mind blast")]
     [SerializeField] private int m_mindBlastCost;
     [SerializeField] private int m_mindBlastPushForce;
     [SerializeField] private float m_mindBlastWindupDelay;
+    [SerializeField] private AudioClip m_mindBlastAudio;
 
     [Header("Blink")]
     [SerializeField] private int m_blinkCost;
     [SerializeField] private int m_blinkDistance;
     [SerializeField] private int m_blinkDamage;
     [SerializeField] private float m_blinkWindupDelay;
+    [SerializeField] private AudioClip m_blinkAudio;
 
     // AP
     private ActionPoints m_actionPoints;
 
     // Preview
     private PlayerPositionPreview m_preview;
+
+    // Sound
+    private AudioSource m_audioSource;
 
     public ActionPoints ActionPoints
     {
@@ -67,6 +73,7 @@ public class Player : Entity, IDamagable
 
 
         m_health.OnHealthZero += OnDeath;
+        m_audioSource = GetComponent<AudioSource>();
     }
 
     public override void TakeDamage(int damage)
@@ -277,6 +284,7 @@ public class Player : Entity, IDamagable
             Direction dir = Grid.Instance.GetDirectionTo(targetPosition, GridPosition);
             FaceDirection(dir);
             Animator.SetTrigger("melee");
+            m_audioSource.PlayOneShot(m_meleeAudio);
             
 
             // Subtract the cost of the move from the action points.
@@ -301,6 +309,7 @@ public class Player : Entity, IDamagable
 
     private IEnumerator PerformMindblast()
     {
+        m_audioSource.PlayOneShot(m_mindBlastAudio);
         Animator.SetTrigger("mindBlast");
         yield return new WaitForSeconds(m_mindBlastWindupDelay);
 
@@ -425,6 +434,9 @@ public class Player : Entity, IDamagable
             // Rotate transform forward towards blink direction and start blink animation.
             Direction dir = Grid.Instance.GetDirectionTo(chosenPosition, GridPosition);
             FaceDirection(dir);
+
+            // Play audio
+            m_audioSource.PlayOneShot(m_blinkAudio);
 
             Animator.SetTrigger("blink");
             yield return new WaitForSeconds(Animator.GetCurrentAnimatorClipInfo(0).Length);

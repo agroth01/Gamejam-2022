@@ -29,6 +29,7 @@ public abstract class Enemy : Entity, IPushable
     private ActionLine m_currentLine;
 
     private EnemyDisplay m_display;
+    private AudioSource m_audioSource;
 
     public ICombatAction IntendedAction
     {
@@ -335,6 +336,25 @@ public abstract class Enemy : Entity, IPushable
             return null;
 
         return lines[Random.Range(0, lines.Count)];
+    }
+
+    #endregion
+
+    #region Audio
+
+    public void PlaySound(AudioClip clip)
+    {
+        if (m_audioSource == null) GetAudioSource();
+        m_audioSource.PlayOneShot(clip);
+    }
+
+    private void GetAudioSource()
+    {
+        m_audioSource = GetComponent<AudioSource>();
+        if (m_audioSource == null)
+        {
+            Debug.LogError("No audio source found on " + gameObject.name);
+        }
     }
 
     #endregion

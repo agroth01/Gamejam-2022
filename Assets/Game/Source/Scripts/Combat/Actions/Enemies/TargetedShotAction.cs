@@ -8,6 +8,7 @@
 // -----------------------
 // ------------------- */
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
@@ -18,9 +19,12 @@ public class TargetedShotAction : ICombatAction
 {
     private Unit m_sender;
     private int m_damage;
+    private Action m_onExecute;
 
     public IEnumerator Execute()
     {
+        m_onExecute();
+
         // There will only ever be one player on the grid, so we can safely assume that the first unit in the list is the player.
         Unit player = Grid.Instance.GetUnitsOfType<Player>()[0];
 
@@ -49,8 +53,9 @@ public class TargetedShotAction : ICombatAction
         yield return 0;
     }
 
-    public TargetedShotAction(Unit sender, int damage)
+    public TargetedShotAction(Unit sender, int damage, Action onStart)
     {
+        m_onExecute = onStart;
         m_sender = sender;
         m_damage = damage;
     }

@@ -18,6 +18,10 @@ public class SniperEnemy : Enemy
     [SerializeField] private int m_maxRange;
     [SerializeField] private int m_damage;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip m_lockOnSound;
+    [SerializeField] private AudioClip m_shootSound;
+
     public override void DetermineAction()
     {
         // Ignore unless within range
@@ -34,9 +38,10 @@ public class SniperEnemy : Enemy
         }
 
         // Create the action
-        ICombatAction targetedShot = new TargetedShotAction(this, m_damage);
+        ICombatAction targetedShot = new TargetedShotAction(this, m_damage, () => { PlaySound(m_shootSound); });
         SetAction(targetedShot);
         SetLine("snipe", m_damage);
+        PlaySound(m_lockOnSound);
     }
 
     public override void DetermineMove()
