@@ -12,7 +12,9 @@ public class LaserBeam : MonoBehaviour
     private void Awake()
     {
         m_lineRenderer = GetComponent<LineRenderer>();
-        m_playerTransform = GameObject.Find("Player").transform; // needs a better way to get the player
+        m_playerTransform = GameObject.Find("Player").transform; // needs a better way to get the player.
+                                                                 // It might also be more usefull if we get the position of the preview too
+                                                                 // and switch to the preview when the player tries to move.
     }
 
     private void Update()
