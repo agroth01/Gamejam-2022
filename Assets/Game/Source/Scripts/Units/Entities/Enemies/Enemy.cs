@@ -133,7 +133,7 @@ public abstract class Enemy : Entity, IPushable
         BattleManager.Instance.RemoveActionFromQueue(m_intendedAction);
         ClearHighlights();
     }
-    
+
     /// <summary>
     /// Method that will be called when the enemy dies. When overriding, it is important
     /// that the base is called AFTER custom logic, unless you want to override removal process.
@@ -143,7 +143,16 @@ public abstract class Enemy : Entity, IPushable
         // Note that we do not need to clear the highlights here when the enemy dies,
         // because it is handled when removing action.
         ClearAction();
-        RemoveUnit();
+
+        // Commenting this out as we want the death animation to play first and probably leave
+        // the unit on scene for some time.
+        //RemoveUnit();
+
+        // Trigger death animation.
+        //if (Animator == null)
+        //    return;
+
+        Animator.SetTrigger("isDead");
     }
 
     #region Player
