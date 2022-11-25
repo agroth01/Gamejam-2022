@@ -18,6 +18,20 @@ public class SniperEnemy : Enemy
     [SerializeField] private int m_maxRange;
     [SerializeField] private int m_damage;
 
+    // Exposing this to be able to get the value from LaserSight script to use it
+    // as laser's max range
+    public int MaxRange { get; private set; }
+
+    [HideInInspector] public GameObject LaserBeam;
+
+    public override void Awake()
+    {
+        base.Awake();
+
+        LaserBeam = GetComponentInChildren<LaserBeam>().gameObject;
+        LaserBeam.SetActive(false);
+    }
+
     public override void DetermineAction()
     {
         // Ignore unless within range
@@ -30,7 +44,7 @@ public class SniperEnemy : Enemy
         if (!LineOfSightToPlayer())
         {
             SetLine("no los");
-            Animator.SetBool("isAiming", false);
+            //Animator.SetBool("isAiming", false);
             return;
         }
 
@@ -39,6 +53,9 @@ public class SniperEnemy : Enemy
         SetAction(targetedShot);
         SetLine("snipe", m_damage);
         Animator.SetBool("isAiming", true);
+        
+        LaserBeam.SetActive(true);
+        transform.LookAt(GetPlayer().transform);
     }
 
     public override void DetermineMove()

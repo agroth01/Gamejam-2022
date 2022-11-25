@@ -45,7 +45,9 @@ public class TargetedShotAction : ICombatAction
             }
         }
 
+        m_sender.GetComponent<Entity>().Animator.SetBool("isAiming", false);
         m_sender.GetComponent<Entity>().Animator.SetTrigger("isShooting");
+        m_sender.GetComponent<SniperEnemy>().LaserBeam.SetActive(false);
         yield return 0;
     }
 
