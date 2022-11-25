@@ -30,6 +30,7 @@ public class SniperEnemy : Enemy
         if (!LineOfSightToPlayer())
         {
             SetLine("no los");
+            Animator.SetBool("isAiming", false);
             return;
         }
 
@@ -37,6 +38,7 @@ public class SniperEnemy : Enemy
         ICombatAction targetedShot = new TargetedShotAction(this, m_damage);
         SetAction(targetedShot);
         SetLine("snipe", m_damage);
+        Animator.SetBool("isAiming", true);
     }
 
     public override void DetermineMove()

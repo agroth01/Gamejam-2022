@@ -62,10 +62,15 @@ public abstract class Enemy : Entity, IPushable
             {
                 protect.Protector.TakeDamage(damage);
                 return;
-            }           
+            }
         }
 
         m_health.Damage(damage);
+
+        if(Animator == null)
+            return;
+
+        Animator.SetTrigger("isHit");
     }
 
     /// <summary>
