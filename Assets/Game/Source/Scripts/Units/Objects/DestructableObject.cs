@@ -61,5 +61,15 @@ public class DestructableObject : Unit, IPushable
     private void CreateHazard()
     {
         EnvironmentHazard.CreateHazard(m_hazardType, m_hazardDuration, GridPosition);
+
+        // Theo: Added this code here to create a hazard in all adjacent tiles too.
+        List<Vector2Int> surroundingTiles = Grid.Instance.GetSurroundingTiles(GridPosition);
+
+        foreach (Vector2Int tile in surroundingTiles)
+        {
+            EnvironmentHazard.CreateHazard(m_hazardType, m_hazardDuration, tile);
+        }
+
+        
     }
 }
